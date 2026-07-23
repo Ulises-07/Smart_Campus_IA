@@ -1,0 +1,114 @@
+/* ============================================================
+   Smart Campus IA - Tema unico
+   Todos los colores del sistema viven aqui. Ningun componente
+   debe escribir un color literal.
+
+   PENDIENTE: sustituir los valores marcados con /* LOGO */ por los
+   colores reales extraidos del logo institucional.
+   ============================================================ */
+
+:root {
+  /* --- Marca (provisional hasta tener el logo) --- */
+  --color-primary: #1d4e7c;        /* LOGO: color primario */
+  --color-primary-dark: #143855;
+  --color-primary-light: #e8f0f7;
+  --color-secondary: #0f8a6a;      /* LOGO: color secundario */
+  --color-accent: #f2a900;         /* LOGO: color de acento */
+
+  /* --- Superficies --- */
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-surface-alt: #eef1f5;
+  --color-border: #d3dae3;
+
+  /* --- Texto (contraste minimo WCAG AA sobre --color-surface) --- */
+  --color-text: #1a2027;
+  --color-text-muted: #5a6672;
+  --color-text-inverse: #ffffff;
+
+  /* --- Estados --- */
+  --color-exito: #1b7f4d;
+  --color-advertencia: #a86500;
+  --color-error: #b3261e;
+  --color-info: #1d4e7c;
+
+  /* --- Semantica academica --- */
+  --color-aprobado: var(--color-exito);
+  --color-reprobado: var(--color-error);
+  --color-presente: var(--color-exito);
+  --color-ausente: var(--color-error);
+  --color-tarde: var(--color-advertencia);
+  --color-justificado: var(--color-info);
+
+  /* --- Tipografia (archivos locales en /public/fonts) --- */
+  --fuente-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fuente-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.875rem;
+  --texto-base: 1rem;
+  --texto-lg: 1.125rem;
+  --texto-xl: 1.375rem;
+  --texto-2xl: 1.75rem;
+
+  /* --- Espaciado y formas --- */
+  --esp-1: 0.25rem;
+  --esp-2: 0.5rem;
+  --esp-3: 0.75rem;
+  --esp-4: 1rem;
+  --esp-6: 1.5rem;
+  --esp-8: 2rem;
+
+  --radio-sm: 4px;
+  --radio-md: 8px;
+  --radio-lg: 12px;
+
+  --sombra-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --sombra-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+
+  /* --- Estructura --- */
+  --ancho-sidebar: 260px;
+  --alto-topbar: 60px;
+  --ancho-contenido: 1200px;
+}
+
+/* Modo oscuro: se activa solo si el usuario lo tiene en su sistema. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #12161b;
+    --color-surface: #1a2027;
+    --color-surface-alt: #232b34;
+    --color-border: #333d47;
+    --color-text: #e8ecf1;
+    --color-text-muted: #9aa7b4;
+    --color-primary-light: #1d2c3a;
+  }
+}
+
+/* --- Base --- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--fuente-base);
+  font-size: var(--texto-base);
+  line-height: 1.55;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Respeta a quien pidió menos animacion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

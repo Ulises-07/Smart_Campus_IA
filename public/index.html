@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Campus IA — Estado del sistema</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <style>
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: var(--esp-8) var(--esp-4);
+    }
+    header h1 {
+      font-size: var(--texto-2xl);
+      color: var(--color-primary);
+      margin: 0 0 var(--esp-1);
+    }
+    header p { color: var(--color-text-muted); margin: 0 0 var(--esp-8); }
+    .tarjeta {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radio-lg);
+      box-shadow: var(--sombra-sm);
+      padding: var(--esp-6);
+      margin-bottom: var(--esp-4);
+    }
+    .tarjeta h2 { font-size: var(--texto-lg); margin: 0 0 var(--esp-4); }
+    .fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--esp-4);
+      padding: var(--esp-3) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .fila:last-child { border-bottom: none; }
+    .etiqueta { color: var(--color-text-muted); font-size: var(--texto-sm); }
+    .insignia {
+      font-size: var(--texto-xs);
+      font-weight: 600;
+      padding: var(--esp-1) var(--esp-3);
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .ok    { background: var(--color-primary-light); color: var(--color-exito); }
+    .falla { background: var(--color-primary-light); color: var(--color-error); }
+    .espera{ background: var(--color-surface-alt); color: var(--color-text-muted); }
+    code { font-family: var(--fuente-mono); font-size: var(--texto-sm); }
+    .nota { color: var(--color-text-muted); font-size: var(--texto-sm); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Smart Campus IA</h1>
+      <p>Fase 0 — verificación del entorno. Esta página desaparece cuando se implemente el login en la Fase 2.</p>
+    </header>
+
+    <section class="tarjeta" aria-labelledby="t-estado">
+      <h2 id="t-estado">Estado de los componentes</h2>
+      <div class="fila">
+        <span class="etiqueta">Servidor Node.js / Express</span>
+        <span class="insignia espera" id="e-servidor">comprobando…</span>
+      </div>
+      <div class="fila">
+        <span class="etiqueta">Base de datos MariaDB</span>
+        <span class="insignia espera" id="e-bd">comprobando…</span>
+      </div>
+      <div class="fila">
+        <span class="etiqueta">IA local (Ollama)</span>
+        <span class="insignia espera" id="e-ia">comprobando…</span>
+      </div>
+      <div class="fila">
+        <span class="etiqueta">Zona horaria</span>
+        <span class="nota" id="e-tz">—</span>
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Verificación de aislamiento</h2>
+      <p class="nota">
+        Abre las herramientas del navegador (F12), pestaña <strong>Network</strong>, y recarga.
+        Todas las peticiones deben apuntar a <code>localhost</code>. Cualquier dominio externo
+        es un incumplimiento del requisito de sistema 100 % local.
+      </p>
+    </section>
+  </main>
+
+  <script src="/js/estado.js"></script>
+</body>
+</html>

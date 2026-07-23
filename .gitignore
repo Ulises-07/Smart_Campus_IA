@@ -1,0 +1,15 @@
+node_modules/
+.env
+*.log
+storage/uploads/*
+storage/backups/*
+storage/logs/*
+!storage/uploads/.gitkeep
+!storage/backups/.gitkeep
+!storage/logs/.gitkeep
+certs/*.key
+certs/*.crt
+certs/*.pem
+.vscode/
+.DS_Store
+Thumbs.db
