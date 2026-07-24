@@ -2,9 +2,9 @@
 
 Sistema de gestión académica **100 % local** para colegio de educación media (7.º a 12.º), Honduras.
 
-> **Estado actual: Fase 0 — entorno e infraestructura.**
-> El esqueleto del servidor, la conexión a base de datos, la seguridad base, los respaldos y el
-> verificador de entorno ya funcionan. La lógica de negocio se construye en las fases 1 a 8.
+> **Estado actual: Fases 0 y 1 completas.**
+> Entorno, esqueleto del servidor y **modelo de datos** listos y probados.
+> Ver `docs/FASE-1.md` para el detalle del modelo y la fórmula de calificación.
 
 ---
 
@@ -251,7 +251,8 @@ smart-campus-ia/
 │   ├── uploads/       material didáctico
 │   ├── backups/
 │   └── logs/
-├── sql/               scripts de esquema y semilla
+├── sql/               esquema, triggers, semilla y permisos
+├── docs/              FASE-1.md y diagrama entidad-relación
 ├── scripts/           utilidades de operación
 └── certs/             certificados (no se versionan)
 ```
@@ -283,8 +284,8 @@ el navegador rechazará cualquier script, estilo o fuente que no venga de este m
 | Fase | Alcance | Estado |
 |---|---|---|
 | **0** | Entorno, esqueleto, seguridad base, respaldos | ✅ **hecho** |
-| 1 | Modelo de datos, SQL, ERD, datos semilla | pendiente |
-| 2 | Autenticación, RBAC, gestión de usuarios | pendiente |
+| **1** | Modelo de datos, SQL, ERD, datos semilla | ✅ **hecho** |
+| 2 | Autenticación, RBAC, gestión de usuarios | siguiente |
 | 3 | Matrícula, clases, horarios, inscripción automática | pendiente |
 | 4 | Notas, asistencia, comportamiento, boletas | pendiente |
 | 5 | Repositorio didáctico y finanzas | pendiente |
@@ -294,16 +295,38 @@ el navegador rechazará cualquier script, estilo o fuente que no venga de este m
 
 ---
 
-## 9. Pendientes de definición
+## 9. Instalar la base de datos (Fase 1)
 
-Antes de la Fase 1 hay que cerrar estos puntos, porque afectan el diseño de la base de datos:
+Con MySQL corriendo, desde **CMD** (no PowerShell):
+
+```cmd
+C:\xampp\mysql\bin\mysql.exe -u root -p smart_campus < sql\01_esquema.sql
+C:\xampp\mysql\bin\mysql.exe -u root -p smart_campus < sql\02_triggers.sql
+C:\xampp\mysql\bin\mysql.exe -u root -p smart_campus < sql\03_datos_semilla.sql
+C:\xampp\mysql\bin\mysql.exe -u root -p               < sql\04_permisos_auditoria.sql
+```
+
+Después:
+
+```cmd
+npm run probar:esquema    # 23 pruebas de los criterios de aceptación
+npm run demo              # colegio de demostración con datos realistas
+```
+
+Detalle completo del modelo, la fórmula de notas y las decisiones de diseño:
+**`docs/FASE-1.md`**. Diagrama entidad-relación: `docs/modelo-datos.mermaid`.
+
+---
+
+## 10. Pendientes de definición
 
 - [ ] **Colores del logo institucional** (primario, secundario, acento en HEX) → `public/css/theme.css`
-- [ ] **Regla de redondeo de notas**: ¿69.5 sube a 70 o se trunca? El criterio de aceptación dice
-      que 69.9 reprueba, lo que sugiere truncado, pero hay que confirmarlo con la dirección del colegio.
-- [ ] **Ponderación por defecto** de cada clase (ej. tareas 30 / proyectos 30 / exámenes 40).
-- [ ] **Umbral de inasistencias** que dispara alerta automática.
-- [ ] **Monto de matrícula y mensualidad**, y regla de cálculo de mora.
+- [x] ~~Regla de redondeo de notas~~ → dos decimales, configurable (`docs/FASE-1.md`)
+- [x] ~~Ponderación por defecto~~ → Tareas 30 / Proyectos 30 / Exámenes 40
+- [ ] **Cifrado del campo `identidad`** de menores → planificado para la Fase 2
+- [ ] **Umbral de inasistencias** que dispara alerta: sembrado en 15 %, confirmar con la dirección
+- [ ] **Monto real de matrícula y mensualidad**, y regla de cálculo de mora
+      (sembrados: L 1,500 y L 900; mora 5 % con 5 días de gracia)
 - [ ] **Consentimiento informado de padres** para el módulo de videovigilancia, política de retención
       escrita y señalización de las áreas monitoreadas. Esto debe estar resuelto **antes** de la Fase 8,
       no después. Grabar menores sin marco legal expone al colegio y a ti.

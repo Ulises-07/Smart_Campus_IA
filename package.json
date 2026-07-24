@@ -12,7 +12,9 @@
     "dev": "node --watch src/server.js",
     "verificar": "node scripts/verificar-entorno.js",
     "cert": "node scripts/generar-certificado.js",
-    "backup": "node scripts/respaldo.js"
+    "backup": "node scripts/respaldo.js",
+    "probar:esquema": "node scripts/probar-esquema.js",
+    "demo": "node scripts/generar-datos-demo.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -1,0 +1,320 @@
+erDiagram
+    ANIO_LECTIVO ||--o{ PERIODO : "se divide en"
+    ANIO_LECTIVO ||--o{ SECCION : "organiza"
+    ANIO_LECTIVO ||--o{ MATRICULA : "enmarca"
+    ANIO_LECTIVO ||--o{ CLASE : "enmarca"
+
+    CARRERA ||--o{ GRADO : "define"
+    GRADO ||--o{ SECCION : "se divide en"
+    AULA ||--o{ SECCION : "aloja"
+    AULA ||--o{ HORARIO : "ocupa"
+
+    PERSONA ||--o| USUARIO : "accede como"
+    PERSONA ||--o| ALUMNO : "es"
+    PERSONA ||--o| ENCARGADO : "es"
+    ROL ||--o{ USUARIO : "clasifica"
+    USUARIO ||--o{ SESION_REFRESH : "mantiene"
+
+    ALUMNO ||--o{ ALUMNO_ENCARGADO : "tiene"
+    ENCARGADO ||--o{ ALUMNO_ENCARGADO : "responde por"
+
+    ALUMNO ||--o{ MATRICULA : "se matricula"
+    SECCION ||--o{ MATRICULA : "recibe"
+    MATRICULA ||--o{ INSCRIPCION : "genera automaticamente"
+
+    ASIGNATURA ||--o{ CLASE : "se imparte como"
+    SECCION ||--o{ CLASE : "cursa"
+    USUARIO ||--o{ CLASE : "imparte"
+    CLASE ||--o{ HORARIO : "se programa en"
+    BLOQUE_HORARIO ||--o{ HORARIO : "delimita"
+    CLASE ||--o{ INSCRIPCION : "inscribe"
+
+    CLASE ||--o{ PONDERACION : "pondera"
+    PERIODO ||--o{ PONDERACION : "aplica en"
+    TIPO_EVALUACION ||--o{ PONDERACION : "pesa"
+
+    CLASE ||--o{ EVALUACION : "contiene"
+    PERIODO ||--o{ EVALUACION : "agrupa"
+    TIPO_EVALUACION ||--o{ EVALUACION : "clasifica"
+    EVALUACION ||--o{ NOTA : "califica"
+    ALUMNO ||--o{ NOTA : "obtiene"
+
+    ALUMNO ||--o{ NOTA_PERIODO : "consolida"
+    CLASE ||--o{ NOTA_PERIODO : "consolida"
+    PERIODO ||--o{ NOTA_PERIODO : "cierra"
+
+    CLASE ||--o{ ASISTENCIA : "registra"
+    ALUMNO ||--o{ ASISTENCIA : "asiste"
+
+    ALUMNO ||--o{ INCIDENCIA : "protagoniza"
+    CLASE ||--o{ INCIDENCIA : "contextualiza"
+
+    CLASE ||--o{ MATERIAL : "publica"
+
+    CONCEPTO_PAGO ||--o{ CARGO : "origina"
+    ALUMNO ||--o{ CARGO : "adeuda"
+    CARGO ||--o{ PAGO : "se salda con"
+
+    USUARIO ||--o{ NOTIFICACION : "recibe"
+
+    ANIO_LECTIVO {
+        int id PK
+        smallint anio UK
+        date fecha_inicio
+        date fecha_fin
+        enum estado "planificado|activo|cerrado"
+    }
+
+    PERIODO {
+        int id PK
+        int anio_lectivo_id FK
+        tinyint numero "1 a 4"
+        enum estado "planificado|abierto|cerrado"
+        datetime cerrado_en
+    }
+
+    CARRERA {
+        int id PK
+        varchar codigo UK
+        varchar nombre
+    }
+
+    GRADO {
+        int id PK
+        tinyint numero "7 a 12"
+        enum nivel "CICLO_COMUN|BTP"
+        int carrera_id FK "NULL en Ciclo Comun"
+        int carrera_key "generada, para el indice unico"
+    }
+
+    SECCION {
+        int id PK
+        int grado_id FK
+        int anio_lectivo_id FK
+        char letra
+        smallint cupo_maximo
+        int aula_id FK
+    }
+
+    AULA {
+        int id PK
+        varchar codigo UK
+        smallint capacidad
+        enum tipo
+    }
+
+    BLOQUE_HORARIO {
+        int id PK
+        tinyint orden UK
+        time hora_inicio
+        time hora_fin
+        bool es_receso
+    }
+
+    ROL {
+        tinyint id PK
+        varchar codigo UK "ADMIN|MAESTRO|ASESOR|ALUMNO"
+    }
+
+    PERSONA {
+        int id PK
+        varchar identidad UK
+        varchar primer_nombre
+        varchar primer_apellido
+        date fecha_nacimiento
+        varchar telefono
+    }
+
+    USUARIO {
+        int id PK
+        int persona_id FK "1 a 1"
+        tinyint rol_id FK
+        varchar usuario UK
+        varchar password_hash "bcrypt coste 12"
+        bool debe_cambiar_password
+        tinyint intentos_fallidos
+        datetime bloqueado_hasta
+    }
+
+    SESION_REFRESH {
+        bigint id PK
+        int usuario_id FK
+        char token_hash UK "solo el hash"
+        datetime expira_en
+        datetime revocado_en
+    }
+
+    ALUMNO {
+        int id PK
+        int persona_id FK "1 a 1"
+        varchar codigo UK
+        enum estado
+    }
+
+    ENCARGADO {
+        int id PK
+        int persona_id FK "1 a 1"
+        varchar ocupacion
+    }
+
+    ALUMNO_ENCARGADO {
+        int alumno_id PK_FK
+        int encargado_id PK_FK
+        enum parentesco
+        bool es_principal
+    }
+
+    MATRICULA {
+        int id PK
+        int alumno_id FK
+        int anio_lectivo_id FK
+        int seccion_id FK
+        enum estado
+    }
+
+    ASIGNATURA {
+        int id PK
+        varchar codigo UK
+        varchar nombre
+    }
+
+    CLASE {
+        int id PK
+        int asignatura_id FK
+        int seccion_id FK
+        int maestro_id FK
+        int anio_lectivo_id FK
+        bool activa
+    }
+
+    HORARIO {
+        int id PK
+        int clase_id FK
+        int bloque_horario_id FK
+        tinyint dia_semana
+        int aula_id FK
+        int maestro_id "copia, para el indice unico"
+        int seccion_id "copia, para el indice unico"
+    }
+
+    INSCRIPCION {
+        int id PK
+        int matricula_id FK
+        int alumno_id FK
+        int clase_id FK
+        enum estado
+    }
+
+    TIPO_EVALUACION {
+        tinyint id PK
+        varchar codigo UK "TAREA|PROYECTO|EXAMEN|PUNTO_EXTRA"
+        bool es_extra
+    }
+
+    PONDERACION {
+        int id PK
+        int clase_id FK
+        int periodo_id FK
+        tinyint tipo_evaluacion_id FK
+        decimal porcentaje "suma 100 por clase y periodo"
+    }
+
+    EVALUACION {
+        int id PK
+        int clase_id FK
+        int periodo_id FK
+        tinyint tipo_evaluacion_id FK
+        varchar titulo
+        decimal puntaje_maximo
+        date fecha
+    }
+
+    NOTA {
+        int id PK
+        int evaluacion_id FK
+        int alumno_id FK
+        decimal puntaje
+        int registrado_por FK
+    }
+
+    NOTA_PERIODO {
+        int id PK
+        int alumno_id FK
+        int clase_id FK
+        int periodo_id FK
+        decimal nota_final
+        decimal nota_minima_aplicada "congela la regla vigente"
+        bool aprobado
+        bool bloqueada
+    }
+
+    ASISTENCIA {
+        int id PK
+        int clase_id FK
+        int alumno_id FK
+        date fecha
+        enum estado "presente|ausente|tarde|justificado"
+    }
+
+    INCIDENCIA {
+        int id PK
+        int alumno_id FK
+        int clase_id FK
+        enum gravedad "leve|grave|muy_grave"
+        enum estado "abierta|en_proceso|resuelta"
+        bool encargado_notificado
+    }
+
+    MATERIAL {
+        int id PK
+        int clase_id FK
+        varchar nombre_original "lo que ve el usuario"
+        varchar nombre_servidor UK "generado por el backend"
+        varchar mime_type
+        int tamano_bytes
+    }
+
+    CONCEPTO_PAGO {
+        int id PK
+        varchar codigo UK
+        enum tipo "matricula|mensualidad|otro"
+        decimal monto_default
+    }
+
+    CARGO {
+        int id PK
+        int alumno_id FK
+        int concepto_id FK
+        tinyint mes
+        decimal monto
+        decimal monto_mora
+        enum estado "pendiente|pagado|mora|exonerado|anulado"
+    }
+
+    PAGO {
+        int id PK
+        int cargo_id FK
+        varchar numero_recibo UK
+        decimal monto
+        datetime fecha_pago
+        bool anulado
+    }
+
+    NOTIFICACION {
+        bigint id PK
+        int usuario_id FK
+        enum tipo
+        bool leida
+    }
+
+    AUDITORIA {
+        bigint id PK
+        int usuario_id "sin FK, para sobrevivir al borrado"
+        enum accion
+        varchar entidad
+        bigint entidad_id
+        longtext valor_anterior "JSON"
+        longtext valor_nuevo "JSON"
+        varchar ip
+        datetime fecha_hora
+    }
