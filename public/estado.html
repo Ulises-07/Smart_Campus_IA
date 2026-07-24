@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estado del sistema — Smart Campus IA</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenido" style="max-width:720px">
+    <h1 style="color:var(--color-primary)">Estado del sistema</h1>
+    <div class="tarjeta">
+      <div style="display:flex;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--color-border)">
+        <span>Servidor Node.js / Express</span><span class="etiqueta-rol" id="e-servidor">comprobando…</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--color-border)">
+        <span>Base de datos MariaDB</span><span class="etiqueta-rol" id="e-bd">comprobando…</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--color-border)">
+        <span>IA local (Ollama)</span><span class="etiqueta-rol" id="e-ia">comprobando…</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.75rem 0">
+        <span>Zona horaria</span><span id="e-tz">—</span>
+      </div>
+    </div>
+    <p style="color:var(--color-text-muted);font-size:var(--texto-sm)">
+      Abre F12 → Network y recarga: todas las peticiones deben apuntar a localhost.
+    </p>
+  </main>
+  <script src="/js/estado.js"></script>
+</body>
+</html>

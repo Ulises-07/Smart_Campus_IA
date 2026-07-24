@@ -2,9 +2,10 @@
 
 Sistema de gestión académica **100 % local** para colegio de educación media (7.º a 12.º), Honduras.
 
-> **Estado actual: Fases 0 y 1 completas.**
-> Entorno, esqueleto del servidor y **modelo de datos** listos y probados.
-> Ver `docs/FASE-1.md` para el detalle del modelo y la fórmula de calificación.
+> **Estado actual: Fases 0, 1 y 2 completas.**
+> Entorno, modelo de datos, **autenticación, permisos y cifrado** listos y probados.
+> Detalle en `docs/FASE-1.md` (modelo y fórmula de notas) y `docs/FASE-2.md`
+> (sesiones, roles, autorización por fila y cifrado).
 
 ---
 
@@ -235,7 +236,7 @@ mysql -u root -p prueba_restauracion < storage/backups/smart_campus_XXXX.sql
 smart-campus-ia/
 ├── src/
 │   ├── config/        env.js, db.js, logger.js
-│   ├── middleware/    error.js  (+ auth, rbac, auditoría en fases siguientes)
+│   ├── middleware/    error.js, auth.js (roles y permisos por fila), seguridad.js
 │   ├── routes/        definición de endpoints
 │   ├── controllers/   entrada/salida HTTP
 │   ├── services/      reglas de negocio (aquí vive el cálculo de notas)
@@ -285,8 +286,8 @@ el navegador rechazará cualquier script, estilo o fuente que no venga de este m
 |---|---|---|
 | **0** | Entorno, esqueleto, seguridad base, respaldos | ✅ **hecho** |
 | **1** | Modelo de datos, SQL, ERD, datos semilla | ✅ **hecho** |
-| 2 | Autenticación, RBAC, gestión de usuarios | siguiente |
-| 3 | Matrícula, clases, horarios, inscripción automática | pendiente |
+| **2** | Autenticación, RBAC, cifrado, gestión de usuarios | ✅ **hecho** |
+| 3 | Matrícula, clases, horarios, inscripción automática | siguiente |
 | 4 | Notas, asistencia, comportamiento, boletas | pendiente |
 | 5 | Repositorio didáctico y finanzas | pendiente |
 | 6 | Chatbot Ollama y analítica | pendiente |
@@ -306,12 +307,26 @@ C:\xampp\mysql\bin\mysql.exe -u root -p smart_campus < sql\03_datos_semilla.sql
 C:\xampp\mysql\bin\mysql.exe -u root -p               < sql\04_permisos_auditoria.sql
 ```
 
-Después:
+Después, el cifrado de datos sensibles (Fase 2):
 
 ```cmd
-npm run probar:esquema    # 23 pruebas de los criterios de aceptación
+C:\xampp\mysql\bin\mysql.exe -u root -p smart_campus < sql\05_cifrado_identidad.sql
+npm run migrar:identidad
+C:\xampp\mysql\bin\mysql.exe -u root -p smart_campus < sql\06_eliminar_identidad_plana.sql
+```
+
+> Antes de migrar necesitas `ENCRYPTION_KEY` y `HASH_PEPPER` en el `.env`.
+> Ver `docs/FASE-2.md`, sección 1.
+
+Y las pruebas:
+
+```cmd
+npm run probar:esquema    # 23 pruebas del modelo de datos
+npm run probar:auth       # 27 pruebas de autenticación y permisos
 npm run demo              # colegio de demostración con datos realistas
 ```
+
+Credenciales iniciales: `admin` / `Admin.2026.Cambiar` (obliga a cambiarla).
 
 Detalle completo del modelo, la fórmula de notas y las decisiones de diseño:
 **`docs/FASE-1.md`**. Diagrama entidad-relación: `docs/modelo-datos.mermaid`.
@@ -323,7 +338,7 @@ Detalle completo del modelo, la fórmula de notas y las decisiones de diseño:
 - [ ] **Colores del logo institucional** (primario, secundario, acento en HEX) → `public/css/theme.css`
 - [x] ~~Regla de redondeo de notas~~ → dos decimales, configurable (`docs/FASE-1.md`)
 - [x] ~~Ponderación por defecto~~ → Tareas 30 / Proyectos 30 / Exámenes 40
-- [ ] **Cifrado del campo `identidad`** de menores → planificado para la Fase 2
+- [x] ~~Cifrado del campo `identidad`~~ → AES-256-GCM + HMAC (`docs/FASE-2.md`)
 - [ ] **Umbral de inasistencias** que dispara alerta: sembrado en 15 %, confirmar con la dirección
 - [ ] **Monto real de matrícula y mensualidad**, y regla de cálculo de mora
       (sembrados: L 1,500 y L 900; mora 5 % con 5 días de gracia)

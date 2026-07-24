@@ -31,6 +31,8 @@ const esquema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   BCRYPT_COST: z.coerce.number().int().min(12).default(12),
+  ENCRYPTION_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/, 'ENCRYPTION_KEY debe ser 64 caracteres hexadecimales'),
+  HASH_PEPPER: z.string().regex(/^[0-9a-fA-F]{64}$/, 'HASH_PEPPER debe ser 64 caracteres hexadecimales'),
   LOGIN_MAX_INTENTOS: z.coerce.number().int().positive().default(5),
   LOGIN_BLOQUEO_MINUTOS: z.coerce.number().int().positive().default(15),
 

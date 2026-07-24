@@ -19,7 +19,7 @@ const destino = esProduccion
 
 export const logger = pino(
   {
-    level: esProduccion ? 'info' : 'debug',
+    level: process.env.LOG_LEVEL || (esProduccion ? 'info' : 'debug'),
     // Nunca registrar credenciales ni tokens en la bitacora.
     redact: {
       paths: [
@@ -31,7 +31,7 @@ export const logger = pino(
       ],
       censor: '[OCULTO]',
     },
-    transport: esProduccion
+    transport: esProduccion || process.env.LOG_LEVEL === 'silent'
       ? undefined
       : { target: 'pino-pretty', options: { colorize: true, translateTime: 'HH:MM:ss' } },
   },

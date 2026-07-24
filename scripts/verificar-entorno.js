@@ -59,13 +59,16 @@ const { env } = await import('../src/config/env.js');
 const { logger } = await import('../src/config/logger.js');
 logger.level = 'silent'; // este script imprime su propio informe
 
-for (const clave of ['DB_PASSWORD', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET']) {
+for (const clave of ['DB_PASSWORD', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'ENCRYPTION_KEY', 'HASH_PEPPER']) {
   if (String(env[clave]).startsWith('CAMBIA')) {
     error(`${clave} conserva el valor de ejemplo`, 'Genera un valor real antes de continuar');
   }
 }
 if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) {
   error('JWT_ACCESS_SECRET y JWT_REFRESH_SECRET son iguales', 'Deben ser dos secretos distintos');
+}
+if (env.ENCRYPTION_KEY === env.HASH_PEPPER) {
+  error('ENCRYPTION_KEY y HASH_PEPPER son iguales', 'Deben ser dos valores distintos');
 }
 if (fallos === 0) ok('Secretos configurados');
 ok('Zona horaria', env.TZ);
@@ -109,6 +112,35 @@ try {
   else error(`Juego de caracteres ${juego[0]?.cs}`, 'Debe ser utf8mb4 para acentos y enies');
 } catch (e) {
   error(`No se pudo conectar a MySQL: ${e.message}`, 'Enciende MySQL en el panel de XAMPP y revisa DB_USER/DB_PASSWORD en .env');
+}
+
+// 4b. Cifrado ----------------------------------------------------------------
+seccion('4b. Cifrado de datos sensibles');
+try {
+  const { cifrar, descifrar, hashBusqueda } = await import('../src/config/crypto.js');
+  const muestra = '0501200012345';
+  if (descifrar(cifrar(muestra)) === muestra) ok('Cifrado y descifrado funcionan');
+  else error('El cifrado no es reversible', 'Revisa ENCRYPTION_KEY en .env');
+
+  const h = hashBusqueda(muestra);
+  if (h && h.length === 64 && h === hashBusqueda(muestra)) ok('Hash de busqueda es determinista');
+  else error('El hash de busqueda no es estable', 'Revisa HASH_PEPPER en .env');
+
+  const { q: consulta } = await import('../src/config/db.js');
+  const cols = await consulta(
+    "SELECT column_name AS c FROM information_schema.columns WHERE table_schema = ? AND table_name = 'persona' AND column_name IN ('identidad','identidad_cifrada')",
+    [env.DB_NAME]
+  );
+  const nombres = cols.map((r) => r.c ?? r.COLUMN_NAME);
+  if (nombres.includes('identidad_cifrada') && !nombres.includes('identidad')) {
+    ok('La identidad esta cifrada en reposo');
+  } else if (nombres.includes('identidad_cifrada')) {
+    aviso('Migracion de cifrado a medias', 'Falta ejecutar sql/06_eliminar_identidad_plana.sql');
+  } else if (nombres.length) {
+    aviso('La identidad esta en texto plano', 'Ejecuta sql/05 y luego npm run migrar:identidad');
+  }
+} catch (e) {
+  error(`No se pudo verificar el cifrado: ${e.message}`, 'Revisa ENCRYPTION_KEY y HASH_PEPPER en .env');
 }
 
 // 5. Ollama ------------------------------------------------------------------

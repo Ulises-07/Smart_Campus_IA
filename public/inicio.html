@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inicio — Smart Campus IA</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="barra-superior">
+    <strong>Smart Campus IA</strong>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <span id="nombre"></span>
+      <span class="etiqueta-rol" id="rol"></span>
+      <button class="boton boton-secundario" id="salir" style="width:auto">Salir</button>
+    </div>
+  </header>
+
+  <main class="contenido">
+    <h2 style="margin-top:0">Sesión iniciada</h2>
+    <div class="tarjeta">
+      <p style="margin-top:0">
+        La autenticación y el control de roles están funcionando. Los módulos académicos
+        se construyen en las fases siguientes.
+      </p>
+      <dl id="detalle" style="display:grid;grid-template-columns:auto 1fr;gap:.5rem 1.5rem;margin:0"></dl>
+    </div>
+  </main>
+
+  <script src="/js/inicio.js"></script>
+</body>
+</html>

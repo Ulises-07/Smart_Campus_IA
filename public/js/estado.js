@@ -3,7 +3,7 @@
   const pintar = (id, texto, clase) => {
     const el = document.getElementById(id);
     el.textContent = texto;
-    el.className = `insignia ${clase}`;
+    el.className = 'etiqueta-rol';
   };
 
   try {

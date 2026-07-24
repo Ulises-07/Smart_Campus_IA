@@ -12,12 +12,12 @@
  * BORRA los datos transaccionales anteriores (no los catálogos). Pide
  * confirmación salvo que se pase --si.
  */
+import './_silencio.js';
 import readline from 'node:readline/promises';
 import bcrypt from 'bcryptjs';
-import { pool, transaccion } from '../src/config/db.js';
-import { logger } from '../src/config/logger.js';
+import { pool, transaccion, q as consulta } from '../src/config/db.js';
+import { cifrar, hashBusqueda } from '../src/config/crypto.js';
 
-logger.level = 'silent';
 
 const AUTO = process.argv.includes('--si');
 const PASSWORD_DEMO = 'Demo.2026.Cambiar';
@@ -87,16 +87,33 @@ async function main() {
     const asignaturas = await q('SELECT id, codigo FROM asignatura');
     const asigPorCodigo = Object.fromEntries(asignaturas.map((a) => [a.codigo, a.id]));
 
+    // Tras la migracion de la Fase 2 la identidad va cifrada. El generador se
+    // adapta a las dos formas para que funcione antes y despues de migrar.
+    const cifrado = (await consulta(
+      `SELECT column_name AS c FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'persona' AND column_name = 'identidad_cifrada'`
+    )).length > 0;
+
     const crearPersona = async (nombre, seg, ap1, ap2, extra = {}) => {
-      const r = await q(
-        `INSERT INTO persona (identidad, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido,
-                              fecha_nacimiento, sexo, direccion, telefono, correo)
-         VALUES (?,?,?,?,?,?,?,?,?,?)`,
-        [extra.identidad ?? null, nombre, seg || null, ap1, ap2,
-          extra.nacimiento ?? null, extra.sexo ?? null,
-          `Col. ${al(['Los Pinos', 'El Carmen', 'Villa Nueva', 'Las Palmas', 'San Jose'])}, Choloma`,
-          `9${ent(1000000, 9999999)}`, extra.correo ?? null]
-      );
+      const direccion = `Col. ${al(['Los Pinos', 'El Carmen', 'Villa Nueva', 'Las Palmas', 'San Jose'])}, Choloma`;
+      const telefono = `9${ent(1000000, 9999999)}`;
+      const comunes = [nombre, seg || null, ap1, ap2, extra.nacimiento ?? null, extra.sexo ?? null,
+        direccion, telefono, extra.correo ?? null];
+
+      const r = cifrado
+        ? await q(
+          `INSERT INTO persona (identidad_cifrada, identidad_hash, primer_nombre, segundo_nombre,
+                                primer_apellido, segundo_apellido, fecha_nacimiento, sexo,
+                                direccion, telefono, correo)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+          [cifrar(extra.identidad ?? null), hashBusqueda(extra.identidad ?? null), ...comunes]
+        )
+        : await q(
+          `INSERT INTO persona (identidad, primer_nombre, segundo_nombre, primer_apellido,
+                                segundo_apellido, fecha_nacimiento, sexo, direccion, telefono, correo)
+           VALUES (?,?,?,?,?,?,?,?,?,?)`,
+          [extra.identidad ?? null, ...comunes]
+        );
       return r.insertId;
     };
 

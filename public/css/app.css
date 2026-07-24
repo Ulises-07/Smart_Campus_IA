@@ -1,0 +1,93 @@
+/* Estilos compartidos. Todos los colores vienen de theme.css. */
+
+.pantalla-centrada {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--esp-4);
+}
+
+.tarjeta {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-md);
+  padding: var(--esp-8);
+}
+
+.tarjeta-acceso { width: 100%; max-width: 400px; }
+
+.marca { text-align: center; margin-bottom: var(--esp-6); }
+.marca h1 { font-size: var(--texto-xl); color: var(--color-primary); margin: 0 0 var(--esp-1); }
+.marca p { color: var(--color-text-muted); font-size: var(--texto-sm); margin: 0; }
+
+.campo { margin-bottom: var(--esp-4); }
+.campo label {
+  display: block;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  margin-bottom: var(--esp-2);
+}
+.campo input {
+  width: 100%;
+  padding: var(--esp-3);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radio-md);
+}
+.campo input:focus { border-color: var(--color-primary); }
+.campo .ayuda { font-size: var(--texto-xs); color: var(--color-text-muted); margin-top: var(--esp-1); }
+
+.boton {
+  width: 100%;
+  padding: var(--esp-3) var(--esp-4);
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text-inverse);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+}
+.boton:hover:not(:disabled) { background: var(--color-primary-dark); }
+.boton:disabled { opacity: 0.55; cursor: not-allowed; }
+.boton-secundario {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+}
+
+.aviso {
+  padding: var(--esp-3) var(--esp-4);
+  border-radius: var(--radio-md);
+  font-size: var(--texto-sm);
+  margin-bottom: var(--esp-4);
+  border: 1px solid transparent;
+}
+.aviso[hidden] { display: none; }
+.aviso-error   { background: var(--color-primary-light); color: var(--color-error);   border-color: currentColor; }
+.aviso-exito   { background: var(--color-primary-light); color: var(--color-exito);   border-color: currentColor; }
+.aviso-info    { background: var(--color-surface-alt);   color: var(--color-text-muted); }
+.aviso ul { margin: var(--esp-2) 0 0; padding-left: var(--esp-6); }
+
+.barra-superior {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: var(--alto-topbar);
+  padding: 0 var(--esp-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.barra-superior strong { color: var(--color-primary); }
+.contenido { max-width: var(--ancho-contenido); margin: 0 auto; padding: var(--esp-8) var(--esp-4); }
+.etiqueta-rol {
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  padding: var(--esp-1) var(--esp-3);
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}

@@ -9,7 +9,10 @@ import pinoHttp from 'pino-http';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { noEncontrado, manejadorErrores } from './middleware/error.js';
+import { verificarOrigen } from './middleware/seguridad.js';
 import { saludRouter } from './routes/salud.routes.js';
+import { authRouter } from './routes/auth.routes.js';
+import { usuarioRouter } from './routes/usuario.routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const raizProyecto = path.resolve(__dirname, '..');
@@ -63,8 +66,13 @@ app.use(
   })
 );
 
+// Toda peticion que modifique datos debe venir de este mismo origen.
+app.use('/api', verificarOrigen);
+
 // --- Rutas de API ---
 app.use('/api', saludRouter);
+app.use('/api', authRouter);
+app.use('/api', usuarioRouter);
 
 // --- Frontend estatico ---
 // Solo /public es publico. storage/ queda fuera a proposito.

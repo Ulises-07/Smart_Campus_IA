@@ -14,7 +14,9 @@
     "cert": "node scripts/generar-certificado.js",
     "backup": "node scripts/respaldo.js",
     "probar:esquema": "node scripts/probar-esquema.js",
-    "demo": "node scripts/generar-datos-demo.js"
+    "demo": "node scripts/generar-datos-demo.js",
+    "migrar:identidad": "node scripts/migrar-identidad.js",
+    "probar:auth": "node scripts/probar-auth.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -9,10 +9,9 @@
  * Todo corre dentro de una transacción que se revierte al final: no deja
  * ningún dato en tu base.
  */
+import './_silencio.js';
 import { pool } from '../src/config/db.js';
-import { logger } from '../src/config/logger.js';
 
-logger.level = 'silent';
 
 const VERDE = '\x1b[32m';
 const ROJO = '\x1b[31m';
