@@ -44,6 +44,21 @@ academicoRouter.get('/mis-clases', asyncHandler(async (req, res) => {
   res.json({ ok: true, clases: await academico.misClases(req.usuario, anio.id) });
 }));
 
+academicoRouter.get('/periodos', asyncHandler(async (req, res) => {
+  const { q } = await import('../config/db.js');
+  const anio = await matricula.anioActivo();
+  const periodos = await q(
+    'SELECT id, numero, nombre, estado, fecha_inicio, fecha_fin FROM periodo WHERE anio_lectivo_id = ? ORDER BY numero',
+    [anio.id]
+  );
+  res.json({ ok: true, periodos });
+}));
+
+academicoRouter.get('/tipos-evaluacion', asyncHandler(async (req, res) => {
+  const { q } = await import('../config/db.js');
+  res.json({ ok: true, tipos: await q('SELECT id, codigo, nombre, es_extra FROM tipo_evaluacion ORDER BY es_extra, id') });
+}));
+
 // ============================================================================
 // Alumnos
 // ============================================================================

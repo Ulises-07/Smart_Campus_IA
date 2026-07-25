@@ -2,10 +2,9 @@
 
 Sistema de gestión académica **100 % local** para colegio de educación media (7.º a 12.º), Honduras.
 
-> **Estado actual: Fases 0 a 3 completas.** 83 pruebas automatizadas en verde.
-> Entorno, modelo de datos, seguridad y **matrícula, clases y horarios** listos.
-> Detalle en `docs/FASE-1.md` (modelo y fórmula de notas), `docs/FASE-2.md`
-> (sesiones, roles, cifrado) y `docs/FASE-3.md` (matrícula y horarios).
+> **Estado actual: Fases 0 a 4 completas.** 113 pruebas automatizadas en verde.
+> Entorno, modelo de datos, seguridad, matrícula, horarios y **notas,
+> asistencia y comportamiento** listos. Ver los documentos `docs/FASE-*.md`.
 
 ---
 
@@ -288,8 +287,8 @@ el navegador rechazará cualquier script, estilo o fuente que no venga de este m
 | **1** | Modelo de datos, SQL, ERD, datos semilla | ✅ **hecho** |
 | **2** | Autenticación, RBAC, cifrado, gestión de usuarios | ✅ **hecho** |
 | **3** | Matrícula, clases, horarios, inscripción automática | ✅ **hecho** |
-| 4 | Notas, asistencia, comportamiento, boletas | siguiente |
-| 5 | Repositorio didáctico y finanzas | pendiente |
+| **4** | Notas, asistencia, comportamiento | ✅ **hecho** |
+| 5 | Repositorio didáctico y finanzas | siguiente |
 | 6 | Chatbot Ollama y analítica | pendiente |
 | 7 | Dashboards y auditoría | pendiente |
 | 8 | Videovigilancia (microservicio Python aparte) | pendiente |

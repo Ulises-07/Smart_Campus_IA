@@ -1,0 +1,212 @@
+/**
+ * Asistencia y comportamiento.
+ *
+ * La asistencia se toma por clase y día. El estado 'tarde' cuenta como fracción
+ * de ausencia según config, porque en la práctica no es lo mismo faltar que
+ * llegar tarde, pero tampoco es lo mismo que estar presente.
+ */
+import { q, transaccion } from '../config/db.js';
+import { AppError } from '../middleware/error.js';
+
+async function configAsistencia() {
+  const filas = await q(
+    "SELECT clave, valor FROM config_sistema WHERE clave IN ('asistencia.umbral_alerta','asistencia.tarde_equivale')"
+  );
+  const m = Object.fromEntries(filas.map((f) => [f.clave, f.valor]));
+  return {
+    umbral: Number(m['asistencia.umbral_alerta'] ?? 15),
+    tardeEquivale: Number(m['asistencia.tarde_equivale'] ?? 0.5),
+  };
+}
+
+/**
+ * Planilla de pase de lista: los alumnos de la clase con su estado del día.
+ * Si ya se pasó lista ese día, trae lo registrado para poder corregir.
+ */
+export async function planilla(claseId, fecha) {
+  const alumnos = await q(
+    `SELECT a.id AS alumno_id, a.codigo,
+            TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido, p.segundo_apellido)) AS nombre,
+            asi.estado, asi.observacion
+       FROM inscripcion i
+       JOIN alumno a ON a.id = i.alumno_id
+       JOIN persona p ON p.id = a.persona_id
+       LEFT JOIN asistencia asi ON asi.clase_id = ? AND asi.alumno_id = a.id AND asi.fecha = ?
+      WHERE i.clase_id = ? AND i.estado = 'activa'
+      ORDER BY p.primer_apellido, p.primer_nombre`,
+    [claseId, fecha, claseId]
+  );
+  const yaTomada = alumnos.some((a) => a.estado);
+  return { fecha, yaTomada, alumnos };
+}
+
+/**
+ * Guarda el pase de lista de una clase para un día.
+ * Devuelve los alumnos que, tras este registro, superan el umbral de
+ * inasistencia: son los que hay que notificar al encargado.
+ */
+export async function guardarAsistencia({ claseId, fecha, registros }, ctx) {
+  if (!Array.isArray(registros) || !registros.length) {
+    throw new AppError('No se recibio ningun registro de asistencia.', 400, 'SIN_REGISTROS');
+  }
+
+  const validos = new Set(['presente', 'ausente', 'tarde', 'justificado']);
+  for (const r of registros) {
+    if (!validos.has(r.estado)) {
+      throw new AppError(`Estado de asistencia invalido: ${r.estado}.`, 400, 'ESTADO_INVALIDO');
+    }
+  }
+
+  await transaccion(async (conn) => {
+    for (const r of registros) {
+      await conn.query(
+        `INSERT INTO asistencia (clase_id, alumno_id, fecha, estado, observacion, registrado_por)
+         VALUES (?,?,?,?,?,?)
+         ON DUPLICATE KEY UPDATE estado = VALUES(estado), observacion = VALUES(observacion), registrado_por = VALUES(registrado_por)`,
+        [claseId, r.alumnoId, fecha, r.estado, r.observacion ?? null, ctx?.usuarioId ?? null]
+      );
+    }
+  }, ctx);
+
+  // Tras guardar, ¿quién cruzó el umbral? Se calcula aparte para poder avisar.
+  const enRiesgo = await alumnosEnRiesgo(claseId);
+  return { guardados: registros.length, enRiesgo };
+}
+
+/** Porcentaje de inasistencia por alumno en una clase, y quién supera el umbral. */
+export async function alumnosEnRiesgo(claseId) {
+  const cfg = await configAsistencia();
+
+  const filas = await q(
+    `SELECT a.id AS alumno_id, a.codigo,
+            TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS nombre,
+            COUNT(asi.id) AS total,
+            SUM(asi.estado = 'ausente') AS ausencias,
+            SUM(asi.estado = 'tarde') AS tardanzas,
+            SUM(asi.estado = 'justificado') AS justificadas
+       FROM inscripcion i
+       JOIN alumno a ON a.id = i.alumno_id
+       JOIN persona p ON p.id = a.persona_id
+       LEFT JOIN asistencia asi ON asi.alumno_id = a.id AND asi.clase_id = i.clase_id
+      WHERE i.clase_id = ? AND i.estado = 'activa'
+      GROUP BY a.id`,
+    [claseId]
+  );
+
+  return filas
+    .map((f) => {
+      const total = Number(f.total) || 0;
+      // Las justificadas no cuentan como inasistencia; las tardanzas, en parte.
+      const faltas = Number(f.ausencias) + Number(f.tardanzas) * cfg.tardeEquivale;
+      const pct = total > 0 ? (faltas / total) * 100 : 0;
+      return {
+        alumnoId: f.alumno_id, codigo: f.codigo, nombre: f.nombre,
+        total, ausencias: Number(f.ausencias), tardanzas: Number(f.tardanzas),
+        justificadas: Number(f.justificadas),
+        porcentajeInasistencia: Math.round(pct * 10) / 10,
+        enRiesgo: pct >= cfg.umbral,
+      };
+    })
+    .filter((a) => a.total > 0)
+    .sort((x, y) => y.porcentajeInasistencia - x.porcentajeInasistencia);
+}
+
+/** Resumen de asistencia de un alumno en todas sus clases. */
+export async function resumenAlumno(alumnoId) {
+  const cfg = await configAsistencia();
+  const filas = await q(
+    `SELECT c.id AS clase_id, asg.nombre AS asignatura,
+            COUNT(asi.id) AS total,
+            SUM(asi.estado = 'presente') AS presentes,
+            SUM(asi.estado = 'ausente') AS ausencias,
+            SUM(asi.estado = 'tarde') AS tardanzas,
+            SUM(asi.estado = 'justificado') AS justificadas
+       FROM inscripcion i
+       JOIN clase c ON c.id = i.clase_id
+       JOIN asignatura asg ON asg.id = c.asignatura_id
+       LEFT JOIN asistencia asi ON asi.alumno_id = i.alumno_id AND asi.clase_id = c.id
+      WHERE i.alumno_id = ? AND i.estado = 'activa'
+      GROUP BY c.id
+      ORDER BY asg.nombre`,
+    [alumnoId]
+  );
+
+  return filas.map((f) => {
+    const total = Number(f.total) || 0;
+    const faltas = Number(f.ausencias) + Number(f.tardanzas) * cfg.tardeEquivale;
+    const pct = total > 0 ? (faltas / total) * 100 : 0;
+    return {
+      claseId: f.clase_id, asignatura: f.asignatura, total,
+      presentes: Number(f.presentes), ausencias: Number(f.ausencias),
+      tardanzas: Number(f.tardanzas), justificadas: Number(f.justificadas),
+      porcentajeInasistencia: Math.round(pct * 10) / 10,
+      enRiesgo: pct >= cfg.umbral,
+    };
+  });
+}
+
+// ============================================================================
+// COMPORTAMIENTO / INCIDENCIAS
+// ============================================================================
+
+export async function registrarIncidencia({ alumnoId, claseId, gravedad, descripcion, medidaDisciplinaria, fechaHora }, ctx) {
+  const anio = await q("SELECT id FROM anio_lectivo WHERE estado = 'activo' LIMIT 1");
+  if (!anio.length) throw new AppError('No hay ano lectivo activo.', 409, 'SIN_ANIO');
+
+  return transaccion(async (conn) => {
+    const [r] = await conn.query(
+      `INSERT INTO incidencia (alumno_id, clase_id, anio_lectivo_id, gravedad, descripcion, fecha_hora, medida_disciplinaria, estado, registrado_por)
+       VALUES (?,?,?,?,?,?,?, 'abierta', ?)`,
+      [alumnoId, claseId ?? null, anio[0].id, gravedad, descripcion,
+        fechaHora ?? new Date().toISOString().slice(0, 19).replace('T', ' '),
+        medidaDisciplinaria ?? null, ctx?.usuarioId ?? null]
+    );
+    return { id: r.insertId };
+  }, ctx);
+}
+
+export async function listarIncidencias({ alumnoId, estado, gravedad, pagina = 1, porPagina = 30 }) {
+  const where = [];
+  const params = [];
+  if (alumnoId) { where.push('inc.alumno_id = ?'); params.push(alumnoId); }
+  if (estado) { where.push('inc.estado = ?'); params.push(estado); }
+  if (gravedad) { where.push('inc.gravedad = ?'); params.push(gravedad); }
+
+  const filtro = where.length ? ` WHERE ${where.join(' AND ')}` : '';
+  const limite = Math.min(Number(porPagina) || 30, 100);
+  const salto = (Math.max(Number(pagina) || 1, 1) - 1) * limite;
+
+  return q(
+    `SELECT inc.id, inc.gravedad, inc.descripcion, inc.fecha_hora, inc.estado,
+            inc.medida_disciplinaria, inc.encargado_notificado,
+            a.codigo, TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS alumno,
+            asg.nombre AS clase
+       FROM incidencia inc
+       JOIN alumno a ON a.id = inc.alumno_id
+       JOIN persona p ON p.id = a.persona_id
+       LEFT JOIN clase c ON c.id = inc.clase_id
+       LEFT JOIN asignatura asg ON asg.id = c.asignatura_id
+       ${filtro}
+      ORDER BY inc.fecha_hora DESC
+      LIMIT ? OFFSET ?`,
+    [...params, String(limite), String(salto)]
+  );
+}
+
+export async function actualizarIncidencia(id, { estado, medidaDisciplinaria, encargadoNotificado }, ctx) {
+  const [inc] = await q('SELECT id FROM incidencia WHERE id = ?', [id]);
+  if (!inc) throw new AppError('La incidencia no existe.', 404, 'NO_ENCONTRADO');
+
+  const campos = [];
+  const params = [];
+  if (estado) { campos.push('estado = ?'); params.push(estado); if (estado === 'resuelta') { campos.push('resuelto_por = ?', 'resuelto_en = UTC_TIMESTAMP()'); params.push(ctx?.usuarioId ?? null); } }
+  if (medidaDisciplinaria !== undefined) { campos.push('medida_disciplinaria = ?'); params.push(medidaDisciplinaria); }
+  if (encargadoNotificado !== undefined) { campos.push('encargado_notificado = ?', 'notificado_en = UTC_TIMESTAMP()'); params.push(encargadoNotificado ? 1 : 0); }
+
+  if (!campos.length) return { ok: true };
+
+  await transaccion(async (conn) => {
+    await conn.query(`UPDATE incidencia SET ${campos.join(', ')} WHERE id = ?`, [...params, id]);
+  }, ctx);
+  return { ok: true };
+}

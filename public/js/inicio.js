@@ -42,11 +42,14 @@ const tarjeta = (titulo, valor, nota = '') => `
     t.innerHTML = `
       <thead><tr><th>Asignatura</th><th>Sección</th><th>${usuario.rol === 'ALUMNO' ? 'Maestro' : 'Inscritos'}</th></tr></thead>
       <tbody>${clases.map((k) => `
-        <tr>
+        <tr style="cursor:pointer" data-clase="${k.id}">
           <td>${escapar(k.asignatura)}</td>
           <td>${escapar(`${k.grado}º ${k.seccion}`)}</td>
           <td>${escapar(String(k.maestro ?? k.inscritos ?? '—'))}</td>
         </tr>`).join('')}</tbody>`;
+
+    t.querySelectorAll('[data-clase]').forEach((tr) =>
+      tr.addEventListener('click', () => { window.location.href = `/clase.html?id=${tr.dataset.clase}`; }));
   } catch (e) {
     $('clases').innerHTML = `<tbody><tr><td style="padding:1.5rem;color:var(--color-error)">${escapar(e.message)}</td></tr></tbody>`;
   }

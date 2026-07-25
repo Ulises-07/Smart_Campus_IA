@@ -14,6 +14,7 @@ import { saludRouter } from './routes/salud.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { usuarioRouter } from './routes/usuario.routes.js';
 import { academicoRouter } from './routes/academico.routes.js';
+import { notasRouter } from './routes/notas.routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const raizProyecto = path.resolve(__dirname, '..');
@@ -75,6 +76,7 @@ app.use('/api', saludRouter);
 app.use('/api', authRouter);
 app.use('/api', usuarioRouter);
 app.use('/api', academicoRouter);
+app.use('/api', notasRouter);
 
 // --- Frontend estatico ---
 // Solo /public es publico. storage/ queda fuera a proposito.
