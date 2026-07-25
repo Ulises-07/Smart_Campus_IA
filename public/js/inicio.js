@@ -1,45 +1,53 @@
-(async () => {
-  const salir = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    window.location.href = '/';
-  };
+import { api, iniciarPantalla, escapar } from './comun.js';
 
-  document.getElementById('salir').addEventListener('click', salir);
+const $ = (id) => document.getElementById(id);
+
+const tarjeta = (titulo, valor, nota = '') => `
+  <div class="tarjeta">
+    <div style="font-size:var(--texto-xs);text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-muted)">${escapar(titulo)}</div>
+    <div style="font-size:var(--texto-2xl);font-weight:600;color:var(--color-primary);margin:.25rem 0">${escapar(String(valor))}</div>
+    ${nota ? `<div style="font-size:var(--texto-sm);color:var(--color-text-muted)">${escapar(nota)}</div>` : ''}
+  </div>`;
+
+(async () => {
+  const usuario = await iniciarPantalla('Inicio');
+  $('saludo').textContent = `Hola, ${usuario.persona.nombreCompleto.split(' ')[0]}`;
 
   try {
-    let r = await fetch('/api/auth/yo', { credentials: 'same-origin' });
+    const ctx = await api('/api/contexto');
+    $('sub').textContent = `${ctx.anioLectivo.nombre} · ${usuario.rolNombre}`;
 
-    // Token de acceso vencido: se intenta refrescar una vez antes de rendirse.
-    if (r.status === 401) {
-      const ref = await fetch('/api/auth/refrescar', { method: 'POST', credentials: 'same-origin' });
-      if (!ref.ok) return (window.location.href = '/');
-      r = await fetch('/api/auth/yo', { credentials: 'same-origin' });
+    const c = ctx.catalogos;
+    const matriculados = c.secciones.reduce((s, x) => s + Number(x.matriculados), 0);
+    const cupo = c.secciones.reduce((s, x) => s + Number(x.cupo_maximo), 0);
+
+    $('tarjetas').innerHTML =
+      (['ADMIN', 'ASESOR'].includes(usuario.rol)
+        ? tarjeta('Alumnos matriculados', matriculados, `de ${cupo} cupos disponibles`) +
+          tarjeta('Secciones activas', c.secciones.length) +
+          tarjeta('Maestros', c.maestros.length) +
+          tarjeta('Asignaturas', c.asignaturas.length)
+        : '');
+  } catch (e) {
+    $('sub').textContent = e.message;
+  }
+
+  try {
+    const { clases } = await api('/api/mis-clases');
+    const t = $('clases');
+    if (!clases.length) {
+      t.innerHTML = '<tbody><tr><td style="padding:1.5rem;color:var(--color-text-muted)">Sin clases asignadas.</td></tr></tbody>';
+      return;
     }
-
-    if (!r.ok) return (window.location.href = '/');
-
-    const { usuario } = await r.json();
-    document.getElementById('nombre').textContent = usuario.persona.nombreCompleto;
-    document.getElementById('rol').textContent = usuario.rolNombre;
-
-    const dl = document.getElementById('detalle');
-    const filas = [
-      ['Usuario', usuario.usuario],
-      ['Rol', `${usuario.rolNombre} (${usuario.rol})`],
-      ['Identidad', usuario.persona.identidad ?? 'no registrada'],
-      ['Correo', usuario.persona.correo ?? 'no registrado'],
-      ['Último acceso', usuario.ultimoAcceso ? new Date(usuario.ultimoAcceso).toLocaleString('es-HN') : '—'],
-    ];
-    for (const [k, v] of filas) {
-      const dt = document.createElement('dt');
-      dt.textContent = k;
-      dt.style.color = 'var(--color-text-muted)';
-      const dd = document.createElement('dd');
-      dd.textContent = v;
-      dd.style.margin = '0';
-      dl.append(dt, dd);
-    }
-  } catch {
-    window.location.href = '/';
+    t.innerHTML = `
+      <thead><tr><th>Asignatura</th><th>Sección</th><th>${usuario.rol === 'ALUMNO' ? 'Maestro' : 'Inscritos'}</th></tr></thead>
+      <tbody>${clases.map((k) => `
+        <tr>
+          <td>${escapar(k.asignatura)}</td>
+          <td>${escapar(`${k.grado}º ${k.seccion}`)}</td>
+          <td>${escapar(String(k.maestro ?? k.inscritos ?? '—'))}</td>
+        </tr>`).join('')}</tbody>`;
+  } catch (e) {
+    $('clases').innerHTML = `<tbody><tr><td style="padding:1.5rem;color:var(--color-error)">${escapar(e.message)}</td></tr></tbody>`;
   }
 })();

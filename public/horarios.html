@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Horarios — Smart Campus IA</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenido">
+    <h1 style="margin:0 0 1.5rem;font-size:var(--texto-2xl);color:var(--color-primary)">Horarios</h1>
+
+    <div class="tarjeta" style="margin-bottom:1rem;padding:1rem">
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:end">
+        <div class="campo" style="margin:0;min-width:220px">
+          <label for="f-vista">Ver horario de</label>
+          <select id="f-vista" class="control">
+            <option value="seccion">Sección</option>
+            <option value="maestro">Maestro</option>
+            <option value="aula">Aula</option>
+          </select>
+        </div>
+        <div class="campo" style="margin:0;min-width:260px">
+          <label for="f-valor">&nbsp;</label>
+          <select id="f-valor" class="control"></select>
+        </div>
+        <p id="pista" style="margin:0 0 .75rem;color:var(--color-text-muted);font-size:var(--texto-sm)"></p>
+      </div>
+    </div>
+
+    <div class="tarjeta" style="padding:1rem;overflow:auto">
+      <table class="horario" id="rejilla"><tbody><tr><td>Cargando…</td></tr></tbody></table>
+    </div>
+  </main>
+
+  <dialog id="dlg" class="dialogo"></dialog>
+  <script type="module" src="/js/horarios.js"></script>
+</body>
+</html>

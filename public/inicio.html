@@ -8,26 +8,17 @@
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-  <header class="barra-superior">
-    <strong>Smart Campus IA</strong>
-    <div style="display:flex;align-items:center;gap:1rem">
-      <span id="nombre"></span>
-      <span class="etiqueta-rol" id="rol"></span>
-      <button class="boton boton-secundario" id="salir" style="width:auto">Salir</button>
-    </div>
-  </header>
-
   <main class="contenido">
-    <h2 style="margin-top:0">Sesión iniciada</h2>
-    <div class="tarjeta">
-      <p style="margin-top:0">
-        La autenticación y el control de roles están funcionando. Los módulos académicos
-        se construyen en las fases siguientes.
-      </p>
-      <dl id="detalle" style="display:grid;grid-template-columns:auto 1fr;gap:.5rem 1.5rem;margin:0"></dl>
+    <h1 id="saludo" style="margin:0 0 .25rem;font-size:var(--texto-2xl);color:var(--color-primary)">Inicio</h1>
+    <p id="sub" style="color:var(--color-text-muted);margin:0 0 2rem"></p>
+
+    <div id="tarjetas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem"></div>
+
+    <h2 style="font-size:var(--texto-lg);margin:2rem 0 1rem">Mis clases</h2>
+    <div class="tarjeta" style="padding:0;overflow:auto">
+      <table class="tabla" id="clases"><tbody><tr><td style="padding:1.5rem;color:var(--color-text-muted)">Cargando…</td></tr></tbody></table>
     </div>
   </main>
-
-  <script src="/js/inicio.js"></script>
+  <script type="module" src="/js/inicio.js"></script>
 </body>
 </html>

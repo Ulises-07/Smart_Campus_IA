@@ -91,3 +91,94 @@
   background: var(--color-primary-light);
   color: var(--color-primary);
 }
+
+/* --- Tablas --- */
+.tabla { width: 100%; border-collapse: collapse; font-size: var(--texto-sm); }
+.tabla th, .tabla td {
+  padding: var(--esp-3) var(--esp-4);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+.tabla th {
+  background: var(--color-surface-alt);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: var(--texto-xs);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.tabla tbody tr:hover { background: var(--color-surface-alt); }
+.tabla td.acciones { text-align: right; white-space: nowrap; }
+
+/* --- Controles --- */
+.control {
+  width: 100%;
+  padding: var(--esp-3);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radio-md);
+}
+.boton-mini {
+  padding: var(--esp-1) var(--esp-3);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  border-radius: var(--radio-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.boton-mini:hover { background: var(--color-primary-light); }
+
+/* --- Diálogo --- */
+.dialogo {
+  border: none;
+  border-radius: var(--radio-lg);
+  padding: 0;
+  max-width: 640px;
+  width: 92vw;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--sombra-md);
+}
+.dialogo::backdrop { background: rgba(16, 24, 40, .55); }
+.dialogo .cuerpo { padding: var(--esp-6); max-height: 78vh; overflow: auto; }
+.dialogo h2 { margin: 0 0 var(--esp-4); font-size: var(--texto-lg); color: var(--color-primary); }
+.rejilla-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--esp-4); }
+@media (max-width: 560px) { .rejilla-2 { grid-template-columns: 1fr; } }
+
+/* --- Rejilla de horario --- */
+.horario { width: 100%; border-collapse: collapse; font-size: var(--texto-xs); table-layout: fixed; }
+.horario th, .horario td {
+  border: 1px solid var(--color-border);
+  padding: var(--esp-2);
+  vertical-align: top;
+  height: 58px;
+}
+.horario th { background: var(--color-surface-alt); font-size: var(--texto-xs); }
+.horario th.hora { width: 92px; text-align: left; font-weight: 500; color: var(--color-text-muted); }
+.horario td.receso { background: var(--color-surface-alt); text-align: center; color: var(--color-text-muted); }
+.horario .clase {
+  background: var(--color-primary-light);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radio-sm);
+  padding: var(--esp-2);
+  height: 100%;
+}
+.horario .clase b { display: block; color: var(--color-primary-dark); }
+.horario .clase span { color: var(--color-text-muted); }
+.horario td.libre { cursor: pointer; }
+.horario td.libre:hover { background: var(--color-primary-light); }
+
+.insignia-estado {
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  padding: 2px var(--esp-2);
+  border-radius: 999px;
+  background: var(--color-surface-alt);
+}
+.estado-activo { color: var(--color-exito); }
+.estado-retirado, .estado-trasladado { color: var(--color-advertencia); }
+.estado-egresado { color: var(--color-info); }

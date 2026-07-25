@@ -16,7 +16,9 @@
     "probar:esquema": "node scripts/probar-esquema.js",
     "demo": "node scripts/generar-datos-demo.js",
     "migrar:identidad": "node scripts/migrar-identidad.js",
-    "probar:auth": "node scripts/probar-auth.js"
+    "probar:auth": "node scripts/probar-auth.js",
+    "probar:matricula": "node scripts/probar-matricula.js",
+    "probar": "node scripts/probar-esquema.js && node scripts/probar-auth.js && node scripts/probar-matricula.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
