@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Finanzas — Smart Campus IA</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenido">
+    <h1 style="margin:0 0 1.5rem;font-size:var(--texto-2xl);color:var(--color-primary)">Finanzas</h1>
+
+    <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+      <button class="tab boton boton-secundario activa" data-tab="cuenta" style="width:auto">Estado de cuenta</button>
+      <button class="tab boton boton-secundario" data-tab="morosidad" style="width:auto">Morosidad</button>
+    </div>
+
+    <!-- Estado de cuenta -->
+    <div id="panel-cuenta">
+      <div class="tarjeta" style="margin-bottom:1rem;padding:1rem">
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:end">
+          <div class="campo" style="margin:0;flex:1;min-width:220px">
+            <label for="q">Buscar alumno</label>
+            <input id="q" placeholder="Nombre, apellido o código">
+          </div>
+          <button class="boton" id="btn-buscar" style="width:auto">Buscar</button>
+        </div>
+        <div id="resultados" style="margin-top:.75rem"></div>
+      </div>
+      <div id="cuenta"></div>
+    </div>
+
+    <!-- Morosidad -->
+    <div id="panel-morosidad" hidden>
+      <div class="tarjeta" style="margin-bottom:1rem;padding:1rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <button class="boton boton-secundario" id="btn-mora" style="width:auto">Aplicar mora a vencidos</button>
+        <span style="color:var(--color-text-muted);font-size:var(--texto-sm)">Recalcula el 5% sobre cargos vencidos. Es seguro repetirlo: no duplica.</span>
+      </div>
+      <div id="morosidad"></div>
+    </div>
+  </main>
+
+  <dialog id="dlg" class="dialogo"></dialog>
+  <script type="module" src="/js/finanzas.js"></script>
+</body>
+</html>

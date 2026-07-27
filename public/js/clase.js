@@ -270,12 +270,98 @@ async function cargarAsistencia() {
   }
 }
 
+
+// ---------- MATERIAL ----------
+async function cargarMaterial() {
+  const panel = $('panel-material');
+  panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
+  try {
+    const { material } = await api(`/api/clases/${claseId}/material`);
+    const kb = (b) => b < 1024 * 1024 ? `${Math.round(b / 1024)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+
+    panel.innerHTML = `
+      ${puedeEditar() ? '<button class="boton" id="m-subir" style="width:auto;margin-bottom:1rem">Subir material</button>' : ''}
+      <div class="tarjeta" style="padding:0;overflow:auto">
+        <table class="tabla">
+          <thead><tr><th>Título</th><th>Archivo</th><th>Tamaño</th><th>Subido</th><th></th></tr></thead>
+          <tbody>${material.length ? material.map((m) => `
+            <tr>
+              <td><b>${escapar(m.titulo)}</b>${m.descripcion ? `<br><span style="color:var(--color-text-muted);font-size:var(--texto-xs)">${escapar(m.descripcion)}</span>` : ''}</td>
+              <td>${escapar(m.nombre_original)}</td>
+              <td>${kb(m.tamano_bytes)}</td>
+              <td style="font-size:var(--texto-xs);color:var(--color-text-muted)">${escapar(m.subido_por ?? '—')}</td>
+              <td class="acciones">
+                <a class="boton-mini" href="/api/material/${m.id}/descargar">Descargar</a>
+                ${puedeEditar() ? `<button class="boton-mini" data-borrar-mat="${m.id}">Borrar</button>` : ''}
+              </td>
+            </tr>`).join('') : '<tr><td colspan="5" style="padding:1.5rem;color:var(--color-text-muted)">Sin material publicado.</td></tr>'}</tbody>
+        </table>
+      </div>`;
+
+    $('m-subir')?.addEventListener('click', subirMaterial);
+    panel.querySelectorAll('[data-borrar-mat]').forEach((b) =>
+      b.addEventListener('click', async () => {
+        await api(`/api/material/${b.dataset.borrarMat}`, { method: 'DELETE' });
+        cargarMaterial();
+      }));
+  } catch (e) {
+    panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
+}
+
+function subirMaterial() {
+  const dlg = $('dlg');
+  dlg.innerHTML = `
+    <div class="cuerpo">
+      <h2>Subir material</h2>
+      <div id="dlg-aviso" class="aviso aviso-error" hidden></div>
+      <div class="campo"><label>Título</label><input id="m-titulo" class="control"></div>
+      <div class="campo"><label>Descripción (opcional)</label><input id="m-desc" class="control"></div>
+      <div class="campo"><label>Archivo</label><input id="m-archivo" class="control" type="file" accept=".pdf,.docx,.pptx,.xlsx,.jpg,.jpeg,.png"></div>
+      <p style="color:var(--color-text-muted);font-size:var(--texto-xs)">Formatos: PDF, Word, PowerPoint, Excel, imágenes. Máx 25 MB.</p>
+      <div style="display:flex;gap:.75rem;margin-top:1rem">
+        <button class="boton" id="m-ok">Subir</button>
+        <button class="boton boton-secundario" id="m-cerrar">Cancelar</button>
+      </div>
+    </div>`;
+  dlg.showModal();
+  $('m-cerrar').onclick = () => dlg.close();
+  $('m-ok').onclick = async () => {
+    const archivo = $('m-archivo').files[0];
+    const titulo = $('m-titulo').value.trim();
+    if (!archivo || !titulo) { mostrarErr('Falta el título o el archivo.'); return; }
+
+    const fd = new FormData();
+    fd.append('titulo', titulo);
+    if ($('m-desc').value.trim()) fd.append('descripcion', $('m-desc').value.trim());
+    fd.append('archivo', archivo);
+
+    try {
+      const r = await fetch(`/api/clases/${claseId}/material`, { method: 'POST', credentials: 'same-origin', body: fd });
+      const datos = await r.json().catch(() => ({}));
+      if (r.status === 401) { const ref = await fetch('/api/auth/refrescar', { method: 'POST', credentials: 'same-origin' }); if (ref.ok) return $('m-ok').click(); window.location.href = '/'; return; }
+      if (!r.ok) { mostrarErr(datos.mensaje || 'No se pudo subir.', datos.detalles); return; }
+      dlg.close();
+      avisar('Material subido.', 'exito');
+      cargarMaterial();
+    } catch { mostrarErr('No se pudo conectar.'); }
+  };
+  function mostrarErr(texto, detalles = []) {
+    const a = $('dlg-aviso');
+    a.innerHTML = escapar(texto) + (detalles?.length ? `<ul>${detalles.map((d) => `<li>${escapar(d)}</li>`).join('')}</ul>` : '');
+    a.hidden = false;
+  }
+}
+
 function cambiarTab(tab) {
   tabActiva = tab;
   document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('activa', b.dataset.tab === tab));
   $('panel-notas').hidden = tab !== 'notas';
   $('panel-asistencia').hidden = tab !== 'asistencia';
-  if (tab === 'notas') cargarNotas(); else cargarAsistencia();
+  $('panel-material').hidden = tab !== 'material';
+  if (tab === 'notas') cargarNotas();
+  else if (tab === 'asistencia') cargarAsistencia();
+  else cargarMaterial();
 }
 
 (async () => {
