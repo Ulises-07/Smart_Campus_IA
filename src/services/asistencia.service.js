@@ -7,6 +7,7 @@
  */
 import { q, transaccion } from '../config/db.js';
 import { AppError } from '../middleware/error.js';
+import { avisarInasistencia, avisarIncidencia } from './notificacion.service.js';
 
 async function configAsistencia() {
   const filas = await q(
@@ -70,6 +71,20 @@ export async function guardarAsistencia({ claseId, fecha, registros }, ctx) {
 
   // Tras guardar, ¿quién cruzó el umbral? Se calcula aparte para poder avisar.
   const enRiesgo = await alumnosEnRiesgo(claseId);
+
+  // Notificar a la familia de quienes superan el umbral. Va FUERA de la
+  // transacción de asistencia: si un aviso falla, la asistencia ya quedó
+  // guardada y no debe deshacerse por eso.
+  const [clase] = await q(
+    `SELECT asg.nombre AS asignatura FROM clase c JOIN asignatura asg ON asg.id = c.asignatura_id WHERE c.id = ?`,
+    [claseId]
+  );
+  for (const a of enRiesgo.filter((x) => x.enRiesgo)) {
+    await avisarInasistencia({
+      alumnoId: a.alumnoId, asignatura: clase?.asignatura ?? 'una asignatura', porcentaje: a.porcentajeInasistencia,
+    }).catch(() => { /* el aviso es best-effort */ });
+  }
+
   return { guardados: registros.length, enRiesgo };
 }
 
@@ -153,7 +168,7 @@ export async function registrarIncidencia({ alumnoId, claseId, gravedad, descrip
   const anio = await q("SELECT id FROM anio_lectivo WHERE estado = 'activo' LIMIT 1");
   if (!anio.length) throw new AppError('No hay ano lectivo activo.', 409, 'SIN_ANIO');
 
-  return transaccion(async (conn) => {
+  const resultado = await transaccion(async (conn) => {
     const [r] = await conn.query(
       `INSERT INTO incidencia (alumno_id, clase_id, anio_lectivo_id, gravedad, descripcion, fecha_hora, medida_disciplinaria, estado, registrado_por)
        VALUES (?,?,?,?,?,?,?, 'abierta', ?)`,
@@ -163,6 +178,10 @@ export async function registrarIncidencia({ alumnoId, claseId, gravedad, descrip
     );
     return { id: r.insertId };
   }, ctx);
+
+  // Aviso a la familia, fuera de la transaccion.
+  await avisarIncidencia({ alumnoId, gravedad }).catch(() => {});
+  return resultado;
 }
 
 export async function listarIncidencias({ alumnoId, estado, gravedad, pagina = 1, porPagina = 30 }) {

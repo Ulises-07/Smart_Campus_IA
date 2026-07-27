@@ -84,6 +84,10 @@ export async function iniciarPantalla(tituloPagina) {
   });
 
   if (tituloPagina) document.title = `${tituloPagina} — Smart Campus IA`;
+
+  // Campana de notificaciones y asistente, presentes en toda pantalla.
+  montarExtras(usuario).catch(() => { /* los extras no deben romper la pantalla */ });
+
   return usuario;
 }
 
@@ -114,3 +118,145 @@ export const limpiarAviso = () => {
   const c = document.getElementById('aviso-global');
   if (c) c.hidden = true;
 };
+
+// ============================================================================
+// Campana de notificaciones y widget de chat.
+// Se montan en la barra superior desde iniciarPantalla, así aparecen en todas
+// las pantallas sin repetir código.
+// ============================================================================
+
+export async function montarExtras(usuario) {
+  montarCampana();
+  montarChat(usuario);
+}
+
+function montarCampana() {
+  const barra = document.querySelector('.barra-superior > div:last-child');
+  if (!barra) return;
+
+  const boton = document.createElement('button');
+  boton.className = 'campana';
+  boton.innerHTML = '🔔<span class="punto" hidden>0</span>';
+  boton.title = 'Notificaciones';
+  barra.insertBefore(boton, barra.firstChild);
+
+  const punto = boton.querySelector('.punto');
+  let panel = null;
+
+  async function refrescarContador() {
+    try {
+      const { noLeidas } = await api('/api/notificaciones/contador');
+      if (noLeidas > 0) { punto.textContent = noLeidas > 99 ? '99+' : noLeidas; punto.hidden = false; }
+      else punto.hidden = true;
+    } catch { /* silencioso: el contador es secundario */ }
+  }
+
+  async function abrirPanel() {
+    if (panel) { panel.remove(); panel = null; return; }
+    const { notificaciones } = await api('/api/notificaciones');
+    panel = document.createElement('div');
+    panel.className = 'panel-notif';
+    panel.innerHTML = `
+      <header>
+        <strong style="font-size:var(--texto-sm)">Notificaciones</strong>
+        <button class="boton-mini" id="leer-todas">Marcar todas</button>
+      </header>
+      ${notificaciones.length ? notificaciones.map((n) => `
+        <div class="notif-item ${n.leida ? '' : 'no-leida'}" data-id="${n.id}">
+          <div class="titulo">${escapar(n.titulo)}</div>
+          <div class="mensaje">${escapar(n.mensaje)}</div>
+          <div class="fecha">${new Date(n.creado_en).toLocaleString('es-HN')}</div>
+        </div>`).join('')
+        : '<div class="notif-item"><div class="mensaje">Sin notificaciones.</div></div>'}`;
+    document.body.appendChild(panel);
+
+    panel.querySelector('#leer-todas').onclick = async () => {
+      await api('/api/notificaciones/leer-todas', { method: 'POST' });
+      panel.remove(); panel = null;
+      refrescarContador();
+    };
+    panel.querySelectorAll('.notif-item[data-id]').forEach((el) => {
+      el.onclick = async () => {
+        if (el.classList.contains('no-leida')) {
+          await api(`/api/notificaciones/${el.dataset.id}/leer`, { method: 'POST' }).catch(() => {});
+          el.classList.remove('no-leida');
+          refrescarContador();
+        }
+      };
+    });
+  }
+
+  boton.onclick = abrirPanel;
+  document.addEventListener('click', (e) => {
+    if (panel && !panel.contains(e.target) && e.target !== boton && !boton.contains(e.target)) {
+      panel.remove(); panel = null;
+    }
+  });
+
+  refrescarContador();
+  setInterval(refrescarContador, 60000); // revisa cada minuto
+}
+
+function montarChat(usuario) {
+  const fab = document.createElement('button');
+  fab.className = 'chat-fab';
+  fab.innerHTML = '💬';
+  fab.title = 'Asistente';
+  document.body.appendChild(fab);
+
+  let ventana = null;
+
+  fab.onclick = async () => {
+    if (ventana) { ventana.remove(); ventana = null; fab.innerHTML = '💬'; return; }
+    fab.innerHTML = '✕';
+
+    ventana = document.createElement('div');
+    ventana.className = 'chat-ventana';
+    ventana.innerHTML = `
+      <header><b>Asistente</b><span>Pregúntame sobre tus datos del sistema</span></header>
+      <div class="chat-mensajes" id="chat-msgs">
+        <div class="chat-burbuja bot">Hola ${escapar(usuario.persona.nombreCompleto.split(' ')[0])}. ¿En qué te ayudo?</div>
+      </div>
+      <div class="chat-entrada">
+        <input id="chat-input" placeholder="Escribe tu pregunta…" maxlength="500">
+        <button class="boton" id="chat-enviar" style="width:auto">Enviar</button>
+      </div>`;
+    document.body.appendChild(ventana);
+
+    const msgs = ventana.querySelector('#chat-msgs');
+    const input = ventana.querySelector('#chat-input');
+    const enviar = ventana.querySelector('#chat-enviar');
+    input.focus();
+
+    const burbuja = (texto, quien) => {
+      const d = document.createElement('div');
+      d.className = `chat-burbuja ${quien}`;
+      d.textContent = texto;
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+      return d;
+    };
+
+    async function preguntar() {
+      const texto = input.value.trim();
+      if (!texto) return;
+      input.value = '';
+      burbuja(texto, 'usuario');
+      const pensando = burbuja('Pensando…', 'bot');
+      enviar.disabled = true;
+
+      try {
+        const r = await api('/api/asistente/preguntar', { method: 'POST', body: { pregunta: texto } });
+        pensando.textContent = r.respuesta;
+      } catch (e) {
+        pensando.textContent = e.message || 'No pude responder ahora.';
+      } finally {
+        enviar.disabled = false;
+        input.focus();
+      }
+    }
+
+    enviar.onclick = preguntar;
+    input.onkeydown = (e) => { if (e.key === 'Enter') preguntar(); };
+  };
+}

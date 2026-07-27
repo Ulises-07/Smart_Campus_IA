@@ -17,6 +17,7 @@ import { academicoRouter } from './routes/academico.routes.js';
 import { notasRouter } from './routes/notas.routes.js';
 import { materialRouter } from './routes/material.routes.js';
 import { finanzasRouter } from './routes/finanzas.routes.js';
+import { asistenteRouter } from './routes/asistente.routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const raizProyecto = path.resolve(__dirname, '..');
@@ -81,6 +82,7 @@ app.use('/api', academicoRouter);
 app.use('/api', notasRouter);
 app.use('/api', materialRouter);
 app.use('/api', finanzasRouter);
+app.use('/api', asistenteRouter);
 
 // --- Frontend estatico ---
 // Solo /public es publico. storage/ queda fuera a proposito.
