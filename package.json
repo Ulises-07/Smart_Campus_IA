@@ -18,10 +18,11 @@
     "migrar:identidad": "node scripts/migrar-identidad.js",
     "probar:auth": "node scripts/probar-auth.js",
     "probar:matricula": "node scripts/probar-matricula.js",
-    "probar": "node scripts/probar-esquema.js && node scripts/probar-auth.js && node scripts/probar-matricula.js && node scripts/probar-notas.js && node scripts/probar-finanzas.js && node scripts/probar-asistente.js",
+    "probar": "node scripts/probar-esquema.js && node scripts/probar-auth.js && node scripts/probar-matricula.js && node scripts/probar-notas.js && node scripts/probar-finanzas.js && node scripts/probar-asistente.js && node scripts/probar-reportes.js",
     "probar:notas": "node scripts/probar-notas.js",
     "probar:finanzas": "node scripts/probar-finanzas.js",
-    "probar:asistente": "node scripts/probar-asistente.js"
+    "probar:asistente": "node scripts/probar-asistente.js",
+    "probar:reportes": "node scripts/probar-reportes.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -36,7 +37,8 @@
     "mysql2": "^3.11.0",
     "pino": "^9.3.2",
     "pino-http": "^10.2.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "pdfkit": "^0.15.0"
   },
   "devDependencies": {
     "pino-pretty": "^11.2.2"

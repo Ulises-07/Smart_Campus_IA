@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auditoría — Smart Campus IA</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenido">
+    <h1 style="margin:0 0 .25rem;font-size:var(--texto-2xl);color:var(--color-primary)">Auditoría</h1>
+    <p style="color:var(--color-text-muted);margin:0 0 1rem">Registro inmutable de todo lo que ocurre en el sistema. Solo lectura.</p>
+    <div id="resumen" style="display:flex;gap:1rem;margin-bottom:1rem"></div>
+
+    <div class="tarjeta" style="margin-bottom:1rem;padding:1rem">
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:end">
+        <div class="campo" style="margin:0;min-width:150px"><label>Acción</label>
+          <select id="f-accion" class="control"><option value="">Todas</option></select></div>
+        <div class="campo" style="margin:0;min-width:150px"><label>Entidad</label>
+          <select id="f-entidad" class="control"><option value="">Todas</option></select></div>
+        <div class="campo" style="margin:0"><label>Desde</label><input id="f-desde" class="control" type="date"></div>
+        <div class="campo" style="margin:0"><label>Hasta</label><input id="f-hasta" class="control" type="date"></div>
+        <button class="boton" id="btn-filtrar" style="width:auto">Filtrar</button>
+      </div>
+    </div>
+
+    <div class="tarjeta" style="padding:0;overflow:auto">
+      <table class="tabla" id="tabla"><tbody><tr><td style="padding:1.5rem;color:var(--color-text-muted)">Cargando…</td></tr></tbody></table>
+    </div>
+    <p id="paginacion" style="color:var(--color-text-muted);font-size:var(--texto-sm)"></p>
+  </main>
+
+  <dialog id="dlg" class="dialogo"></dialog>
+  <script type="module" src="/js/auditoria.js"></script>
+</body>
+</html>

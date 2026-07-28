@@ -49,9 +49,11 @@ export async function iniciarPantalla(tituloPagina) {
 
   const menu = [
     { href: '/inicio.html', texto: 'Inicio', roles: ['ADMIN', 'MAESTRO', 'ASESOR', 'ALUMNO'] },
+    { href: '/tablero.html', texto: 'Tablero', roles: ['ADMIN', 'MAESTRO', 'ASESOR', 'ALUMNO'] },
     { href: '/alumnos.html', texto: 'Alumnos', roles: ['ADMIN', 'ASESOR', 'MAESTRO'] },
     { href: '/horarios.html', texto: 'Horarios', roles: ['ADMIN', 'MAESTRO', 'ALUMNO', 'ASESOR'] },
     { href: '/finanzas.html', texto: 'Finanzas', roles: ['ADMIN', 'ASESOR', 'ALUMNO'] },
+    { href: '/auditoria.html', texto: 'Auditoría', roles: ['ADMIN'] },
   ].filter((m) => m.roles.includes(usuario.rol));
 
   const barra = document.createElement('header');

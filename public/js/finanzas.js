@@ -131,7 +131,8 @@ function cobrar(cargoId, saldo, concepto) {
       });
       dlg.close();
       avisar(`${r.mensaje} Saldo restante: ${L(r.saldoRestante)}.`, 'exito');
-      mostrarRecibo(r.pagoId);
+      // Abre el recibo PDF con formato en una pestaña nueva, listo para imprimir.
+      if (r.pagoId) window.open(`/api/pagos/${r.pagoId}/recibo-pdf`, '_blank');
       verCuenta(alumnoActual.id, alumnoActual.nombre);
     } catch (e) { err(e.message, e.detalles); }
   };

@@ -40,7 +40,8 @@ async function cargarNotas() {
       const nota = a.notaFinal !== null
         ? `<b style="color:${a.aprobado ? 'var(--color-aprobado)' : 'var(--color-reprobado)'}">${a.notaFinal}</b>`
         : '<span style="color:var(--color-text-muted)">—</span>';
-      return `<tr><td>${escapar(a.nombre)}</td>${celdas}<td style="text-align:center">${nota}${a.bloqueada ? ' 🔒' : ''}</td></tr>`;
+      const boleta = `<a class="boton-mini" href="/api/alumnos/${a.alumnoId}/boleta?periodoId=${periodoId}" target="_blank" title="Descargar boleta PDF">Boleta</a>`;
+      return `<tr><td>${escapar(a.nombre)}</td>${celdas}<td style="text-align:center">${nota}${a.bloqueada ? ' 🔒' : ''}</td><td class="acciones">${boleta}</td></tr>`;
     }).join('');
 
     panel.innerHTML = `
@@ -56,7 +57,7 @@ async function cargarNotas() {
       </div>
       <div class="tarjeta" style="padding:0;overflow:auto">
         <table class="tabla">
-          <thead><tr><th>Alumno</th>${cabeceras}<th style="text-align:center">Final</th></tr></thead>
+          <thead><tr><th>Alumno</th>${cabeceras}<th style="text-align:center">Final</th><th></th></tr></thead>
           <tbody>${filas || '<tr><td colspan="99" style="padding:1.5rem;color:var(--color-text-muted)">Sin alumnos inscritos.</td></tr>'}</tbody>
         </table>
       </div>
