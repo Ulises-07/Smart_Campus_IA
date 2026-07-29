@@ -18,11 +18,14 @@
     "migrar:identidad": "node scripts/migrar-identidad.js",
     "probar:auth": "node scripts/probar-auth.js",
     "probar:matricula": "node scripts/probar-matricula.js",
-    "probar": "node scripts/probar-esquema.js && node scripts/probar-auth.js && node scripts/probar-matricula.js && node scripts/probar-notas.js && node scripts/probar-finanzas.js && node scripts/probar-asistente.js && node scripts/probar-reportes.js",
+    "probar": "node scripts/probar-esquema.js && node scripts/probar-auth.js && node scripts/probar-matricula.js && node scripts/probar-notas.js && node scripts/probar-finanzas.js && node scripts/probar-asistente.js && node scripts/probar-reportes.js && node scripts/probar-video.js",
     "probar:notas": "node scripts/probar-notas.js",
     "probar:finanzas": "node scripts/probar-finanzas.js",
     "probar:asistente": "node scripts/probar-asistente.js",
-    "probar:reportes": "node scripts/probar-reportes.js"
+    "probar:reportes": "node scripts/probar-reportes.js",
+    "purgar:video": "node scripts/purgar-video.js",
+    "probar:video": "node scripts/probar-video.js",
+    "descargar:modelo": "node scripts/descargar-modelo.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -38,7 +41,9 @@
     "pino": "^9.3.2",
     "pino-http": "^10.2.0",
     "zod": "^3.23.8",
-    "pdfkit": "^0.15.0"
+    "pdfkit": "^0.15.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow-models/coco-ssd": "^2.2.3"
   },
   "devDependencies": {
     "pino-pretty": "^11.2.2"

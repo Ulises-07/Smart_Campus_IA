@@ -1,0 +1,8 @@
+Esta carpeta guarda el modelo de detección de objetos (COCO-SSD).
+
+Está vacía a propósito: el modelo (unos 5-13 MB) se descarga con:
+
+    npm run descargar:modelo
+
+Se corre UNA vez, en una máquina con internet. Después, la detección
+funciona sin conexión, sirviendo el modelo desde aquí.

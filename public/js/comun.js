@@ -54,6 +54,7 @@ export async function iniciarPantalla(tituloPagina) {
     { href: '/horarios.html', texto: 'Horarios', roles: ['ADMIN', 'MAESTRO', 'ALUMNO', 'ASESOR'] },
     { href: '/finanzas.html', texto: 'Finanzas', roles: ['ADMIN', 'ASESOR', 'ALUMNO'] },
     { href: '/auditoria.html', texto: 'Auditoría', roles: ['ADMIN'] },
+    { href: '/video.html', texto: 'Videovigilancia', roles: ['ADMIN'] },
   ].filter((m) => m.roles.includes(usuario.rol));
 
   const barra = document.createElement('header');

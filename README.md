@@ -2,9 +2,10 @@
 
 Sistema de gestión académica **100 % local** para colegio de educación media (7.º a 12.º), Honduras.
 
-> **Estado actual: Fases 0 a 7 completas.** 172 pruebas automatizadas en verde.
-> Todo el ciclo academico y administrativo, IA local, y **tableros, auditoria
-> visible y documentos PDF** (boletas y recibos). Ver los `docs/FASE-*.md`.
+> **Estado actual: sistema completo — Fases 0 a 8.** 204 pruebas automatizadas
+> en verde. Todo el ciclo academico y administrativo, IA local, tableros y PDF,
+> y **videovigilancia con deteccion de objetos peligrosos** en vivo. Ver los
+> `docs/FASE-*.md`. Lo unico pendiente son los colores del logo del colegio.
 
 ---
 
