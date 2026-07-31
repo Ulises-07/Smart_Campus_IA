@@ -17,7 +17,7 @@ CREATE DATABASE IF NOT EXISTS smart_campus
 -- Usuario de la aplicacion (el que usa Node.js)
 -- Principio de minimo privilegio: sin DROP, sin ALTER, sin GRANT.
 -- ------------------------------------------------------------
-CREATE USER IF NOT EXISTS 'sc_app'@'localhost' IDENTIFIED BY 'CAMBIA_ESTA_CLAVE';
+CREATE USER IF NOT EXISTS 'sc_app'@'localhost' IDENTIFIED BY 'ScApp2026Segura';
 
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE
   ON smart_campus.* TO 'sc_app'@'localhost';
@@ -37,7 +37,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE
 -- ------------------------------------------------------------
 -- Usuario de respaldos (solo lectura)
 -- ------------------------------------------------------------
-CREATE USER IF NOT EXISTS 'sc_backup'@'localhost' IDENTIFIED BY 'CAMBIA_ESTA_OTRA_CLAVE';
+CREATE USER IF NOT EXISTS 'sc_backup'@'localhost' IDENTIFIED BY 'ScBackup2026';
 
 GRANT SELECT, LOCK TABLES, SHOW VIEW, EVENT, TRIGGER
   ON smart_campus.* TO 'sc_backup'@'localhost';

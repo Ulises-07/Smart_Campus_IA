@@ -24,10 +24,6 @@
 -- abajo o la aplicación no podrá modificarla.
 -- ============================================================================
 
--- 1. Borrón y cuenta nueva.
-REVOKE ALL PRIVILEGES ON smart_campus.* FROM 'sc_app'@'localhost';
-REVOKE ALL PRIVILEGES ON smart_campus.* FROM 'sc_app'@'127.0.0.1';
-
 -- 2. Lectura y escritura de alta en toda la base, auditoria incluida.
 GRANT SELECT, INSERT, EXECUTE ON smart_campus.* TO 'sc_app'@'localhost';
 GRANT SELECT, INSERT, EXECUTE ON smart_campus.* TO 'sc_app'@'127.0.0.1';
