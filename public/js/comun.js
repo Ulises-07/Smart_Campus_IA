@@ -2,6 +2,11 @@
  * Utilidades compartidas por todas las pantallas.
  * Sin dependencias externas: la CSP bloquea cualquier CDN.
  */
+import { ico, ICONO_SECCION } from './iconos.js';
+import { iniciarTema, botonTema } from './tema.js';
+
+// Aplica el tema guardado de inmediato, antes de dibujar nada.
+iniciarTema();
 
 /**
  * Llama a la API y renueva la sesion sola cuando el token de acceso vence.
@@ -57,29 +62,35 @@ export async function iniciarPantalla(tituloPagina) {
     { href: '/video.html', texto: 'Videovigilancia', roles: ['ADMIN'] },
   ].filter((m) => m.roles.includes(usuario.rol));
 
+  const rutaActual = window.location.pathname;
+
   const barra = document.createElement('header');
   barra.className = 'barra-superior';
   barra.innerHTML = `
-    <div style="display:flex;align-items:center;gap:1.5rem">
-      <strong>Smart Campus IA</strong>
-      <nav style="display:flex;gap:1rem">
-        ${menu.map((m) => `<a href="${m.href}" style="color:var(--color-text);text-decoration:none;font-size:var(--texto-sm)">${m.texto}</a>`).join('')}
-      </nav>
-    </div>
-    <div style="display:flex;align-items:center;gap:1rem">
-      <span style="font-size:var(--texto-sm)">${escapar(usuario.persona.nombreCompleto)}</span>
+    <a href="/inicio.html" class="marca-barra" style="text-decoration:none;color:inherit">
+      <img src="/img/logo-64.png" alt="Smart Campus IA" width="40" height="40">
+      <span>Smart Campus <span class="ia">IA</span></span>
+    </a>
+    <div class="zona-derecha">
+      <span class="usuario-nombre">${escapar(usuario.persona.nombreCompleto)}</span>
       <span class="etiqueta-rol">${escapar(usuario.rolNombre)}</span>
-      <button class="boton boton-secundario" id="salir" style="width:auto;padding:.35rem .9rem">Salir</button>
+      <button class="ico-btn" id="salir" title="Cerrar sesión" style="color:var(--color-sobre-marca)">${ico('salir')}</button>
     </div>`;
   document.body.prepend(barra);
 
-  // Marca visualmente la pantalla actual.
-  for (const a of barra.querySelectorAll('nav a')) {
-    if (a.getAttribute('href') === window.location.pathname) {
-      a.style.color = 'var(--color-primary)';
-      a.style.fontWeight = '600';
-    }
-  }
+  // Botón de tema claro/oscuro, antes del de salir.
+  const zona = barra.querySelector('.zona-derecha');
+  zona.insertBefore(botonTema(), zona.querySelector('#salir'));
+
+  // Menú de navegación con iconos, al inicio del contenido de la página.
+  const nav = document.createElement('nav');
+  nav.className = 'menu-nav';
+  nav.innerHTML = menu.map((m) => {
+    const activa = m.href === rutaActual ? ' activa' : '';
+    return `<a href="${m.href}" class="${activa.trim()}">${ico(ICONO_SECCION[m.href] || 'documento')}${m.texto}</a>`;
+  }).join('');
+  const cont = document.querySelector('.contenido');
+  if (cont) cont.prepend(nav); else barra.after(nav);
 
   document.getElementById('salir').addEventListener('click', async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
@@ -134,12 +145,12 @@ export async function montarExtras(usuario) {
 }
 
 function montarCampana() {
-  const barra = document.querySelector('.barra-superior > div:last-child');
+  const barra = document.querySelector('.barra-superior .zona-derecha');
   if (!barra) return;
 
   const boton = document.createElement('button');
   boton.className = 'campana';
-  boton.innerHTML = '🔔<span class="punto" hidden>0</span>';
+  boton.innerHTML = `${ico('campana')}<span class="punto" hidden>0</span>`;
   boton.title = 'Notificaciones';
   barra.insertBefore(boton, barra.firstChild);
 
@@ -203,33 +214,41 @@ function montarCampana() {
 function montarChat(usuario) {
   const fab = document.createElement('button');
   fab.className = 'chat-fab';
-  fab.innerHTML = '💬';
-  fab.title = 'Asistente';
+  fab.innerHTML = ico('chat');
+  fab.title = 'Asistente IA';
   document.body.appendChild(fab);
 
   let ventana = null;
 
   fab.onclick = async () => {
-    if (ventana) { ventana.remove(); ventana = null; fab.innerHTML = '💬'; return; }
-    fab.innerHTML = '✕';
+    if (ventana) { ventana.remove(); ventana = null; fab.innerHTML = ico('chat'); return; }
+    fab.innerHTML = ico('cerrar');
 
     ventana = document.createElement('div');
     ventana.className = 'chat-ventana';
     ventana.innerHTML = `
-      <header><b>Asistente</b><span>Pregúntame sobre tus datos del sistema</span></header>
+      <header>
+        <span class="avatar-ia">${ico('ia')}</span>
+        <div><b>Asistente IA</b><span>Pregúntame sobre tus datos</span></div>
+      </header>
       <div class="chat-mensajes" id="chat-msgs">
         <div class="chat-burbuja bot">Hola ${escapar(usuario.persona.nombreCompleto.split(' ')[0])}. ¿En qué te ayudo?</div>
       </div>
       <div class="chat-entrada">
-        <input id="chat-input" placeholder="Escribe tu pregunta…" maxlength="500">
-        <button class="boton" id="chat-enviar" style="width:auto">Enviar</button>
+        <input id="chat-input" placeholder="Escribe o dicta tu pregunta…" maxlength="500">
+        <button class="ico-btn micro" id="chat-micro" title="Dictar por voz">${ico('micro')}</button>
+        <button class="ico-btn enviar" id="chat-enviar" title="Enviar">${ico('enviar')}</button>
       </div>`;
     document.body.appendChild(ventana);
 
     const msgs = ventana.querySelector('#chat-msgs');
     const input = ventana.querySelector('#chat-input');
     const enviar = ventana.querySelector('#chat-enviar');
+    const micro = ventana.querySelector('#chat-micro');
     input.focus();
+
+    // Dictado por voz con la API de reconocimiento del navegador.
+    montarDictado(micro, input);
 
     const burbuja = (texto, quien) => {
       const d = document.createElement('div');
@@ -262,4 +281,62 @@ function montarChat(usuario) {
     enviar.onclick = preguntar;
     input.onkeydown = (e) => { if (e.key === 'Enter') preguntar(); };
   };
+}
+
+/**
+ * Dictado por voz para el chat. Usa la API de reconocimiento de voz del
+ * navegador (SpeechRecognition), disponible en Chrome y Edge. Escribe lo
+ * dictado en el campo de texto; el usuario revisa y envía.
+ *
+ * Si el navegador no lo soporta, el botón se oculta (degradación elegante).
+ */
+function montarDictado(boton, input) {
+  const Recon = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recon) {
+    // El navegador no soporta dictado: se oculta el botón sin romper nada.
+    boton.style.display = 'none';
+    return;
+  }
+
+  const recon = new Recon();
+  recon.lang = 'es-HN';           // español; el navegador ajusta al acento
+  recon.interimResults = true;    // muestra el texto mientras se habla
+  recon.continuous = false;       // se detiene al terminar de hablar
+
+  let grabando = false;
+  let textoBase = '';
+
+  boton.addEventListener('click', () => {
+    if (grabando) { recon.stop(); return; }
+    textoBase = input.value ? input.value.trim() + ' ' : '';
+    try { recon.start(); } catch { /* ya estaba iniciando */ }
+  });
+
+  recon.addEventListener('start', () => {
+    grabando = true;
+    boton.classList.add('grabando');
+    boton.title = 'Escuchando… (clic para detener)';
+    input.placeholder = 'Escuchando…';
+  });
+
+  recon.addEventListener('result', (e) => {
+    let texto = '';
+    for (const res of e.results) texto += res[0].transcript;
+    input.value = textoBase + texto;
+  });
+
+  const terminar = () => {
+    grabando = false;
+    boton.classList.remove('grabando');
+    boton.title = 'Dictar por voz';
+    input.placeholder = 'Escribe o dicta tu pregunta…';
+    input.focus();
+  };
+  recon.addEventListener('end', terminar);
+  recon.addEventListener('error', (e) => {
+    terminar();
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      input.placeholder = 'Permite el micrófono en el navegador para dictar.';
+    }
+  });
 }

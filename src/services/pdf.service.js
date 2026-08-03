@@ -14,15 +14,17 @@ import { q } from '../config/db.js';
 import { AppError } from '../middleware/error.js';
 
 // Paleta provisional. Reemplazar por los colores institucionales.
+// Colores del logo institucional (azul marino + dorado).
 const COLOR = {
-  primary: '#1d4ed8',
-  primaryDark: '#1e3a8a',
-  texto: '#111827',
-  suave: '#6b7280',
-  borde: '#d1d5db',
-  aprobado: '#15803d',
-  reprobado: '#b91c1c',
-  fondoAlt: '#f3f4f6',
+  primary: '#0a2f5c',      // azul medio del logo
+  primaryDark: '#001937',  // azul marino del escudo
+  accent: '#dba018',       // dorado institucional
+  texto: '#10233b',
+  suave: '#5a6b7f',
+  borde: '#d8e0ea',
+  aprobado: '#1b7f4d',
+  reprobado: '#b3261e',
+  fondoAlt: '#f1f5fa',
 };
 
 const L = (n) => `L ${Number(n).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -51,7 +53,7 @@ function encabezado(doc, colegio, titulo) {
   }
   doc.moveDown(0.5);
   const y = doc.y;
-  doc.strokeColor(COLOR.primary).lineWidth(2).moveTo(40, y).lineTo(555, y).stroke();
+  doc.strokeColor(COLOR.accent).lineWidth(2).moveTo(40, y).lineTo(555, y).stroke();
   doc.moveDown(0.6);
   doc.fillColor(COLOR.texto).fontSize(14).font('Helvetica-Bold').text(titulo, { align: 'center' });
   doc.moveDown(0.8);
