@@ -364,12 +364,16 @@ export async function cambiarObjetoPeligroso(id, activo, ctx) {
  */
 export async function registrarDeteccion({ camaraId, clase, confianza }, ctx) {
   const vigiladas = await clasesVigiladas();
-  const etiqueta = vigiladas[clase];
-  if (!etiqueta) {
+  const info = vigiladas[clase];
+  if (!info) {
     // La clase no está entre las vigiladas: se ignora en silencio. Evita que un
     // cliente manipulado inunde de detecciones falsas de cualquier objeto.
     throw new AppError('Objeto no vigilado.', 400, 'NO_VIGILADO');
   }
+  // `info` es { etiqueta, nivel }. Extraemos el texto y el nivel por separado,
+  // porque antes se guardaba el objeto entero y aparecía "[object Object]".
+  const etiqueta = info.etiqueta;
+  const nivel = info.nivel ?? 'alto';
 
   const conf = Math.max(0, Math.min(1, Number(confianza) || 0));
 
@@ -389,8 +393,8 @@ export async function registrarDeteccion({ camaraId, clase, confianza }, ctx) {
 
   const detId = await transaccion(async (conn) => {
     const [r] = await conn.query(
-      'INSERT INTO deteccion (camara_id, clase, etiqueta, confianza) VALUES (?,?,?,?)',
-      [camaraId ?? null, clase, etiqueta, conf]
+      'INSERT INTO deteccion (camara_id, clase, etiqueta, nivel, confianza) VALUES (?,?,?,?,?)',
+      [camaraId ?? null, clase, etiqueta, nivel, conf]
     );
     return r.insertId;
   }, ctx);

@@ -5,6 +5,9 @@ let tabActiva = 'camaras';
 
 // ---------- Resumen de gobernanza ----------
 async function cargarResumen() {
+  // El bloque de resumen se retiró de la interfaz; si no está, no hacemos nada.
+  const caja = $('resumen');
+  if (!caja) return;
   try {
     const r = await api('/api/video/resumen');
     const t = (titulo, valor, nota, color = 'var(--color-primary)') => `
@@ -13,12 +16,12 @@ async function cargarResumen() {
         <div style="font-size:var(--texto-2xl);font-weight:700;color:${color};margin:.2rem 0">${valor}</div>
         <div style="font-size:var(--texto-sm);color:var(--color-text-muted)">${nota}</div>
       </div>`;
-    $('resumen').innerHTML =
+    caja.innerHTML =
       t('Cámaras', r.camaras.total, `${r.camaras.activas} activas`) +
       t('Consentimiento otorgado', r.consentimiento.otorgado, `${r.consentimiento.denegado} denegados · ${r.consentimiento.pendiente} pendientes`, 'var(--color-aprobado)') +
       t('Grabaciones vigentes', r.grabaciones.vigentes, `${r.grabaciones.evidencias} marcadas como evidencia`) +
       t('Por purgar', r.grabaciones.porPurgar, 'vencidas, pendientes de purga', r.grabaciones.porPurgar > 0 ? 'var(--color-advertencia)' : 'var(--color-aprobado)');
-  } catch (e) { $('resumen').innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`; }
+  } catch (e) { caja.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`; }
 }
 
 // ---------- Cámaras ----------
@@ -332,13 +335,6 @@ const yaNotificado = new Map(); // anti-spam local por clase
 async function tabMonitoreo() {
   const panel = $('panel');
   panel.innerHTML = `
-    <div class="tarjeta" style="background:var(--color-primary-light);border-left:3px solid var(--color-primary);margin-bottom:1rem">
-      <p style="margin:0;font-size:var(--texto-sm)">
-        La detección corre en <b>este navegador</b> con inteligencia artificial local. El video no se envía a ningún servidor.
-        Cuando se detecta un objeto peligroso, se registra el hecho y se te notifica.
-      </p>
-    </div>
-
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:end;margin-bottom:1rem">
       <div class="campo" style="margin:0;min-width:180px">
         <label>Fuente de video</label>
@@ -598,16 +594,13 @@ function cambiarTab(tab) {
   tabActiva = tab;
   document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('activa', b.dataset.tab === tab));
   detenerMonitoreo(); // al salir de monitoreo, se apaga la cámara
-  if (tab === 'monitoreo') tabMonitoreo();
-  else if (tab === 'detecciones') tabDetecciones();
+  if (tab === 'detecciones') tabDetecciones();
   else if (tab === 'camaras') tabCamaras();
-  else if (tab === 'consentimientos') tabConsentimientos();
-  else tabGrabaciones();
+  else tabMonitoreo();
 }
 
 (async () => {
   await iniciarPantalla('Videovigilancia');
   document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => cambiarTab(b.dataset.tab)));
-  await cargarResumen();
   cambiarTab('monitoreo');
 })();

@@ -10,20 +10,12 @@
 </head>
 <body>
   <main class="contenido">
-    <h1 style="margin:0 0 .25rem;font-size:var(--texto-2xl);color:var(--color-primary)">Videovigilancia</h1>
-    <p style="color:var(--color-text-muted);margin:0 0 1rem;max-width:60ch">
-      Capa de gobernanza: consentimiento, retención y acceso auditado. Este módulo administra
-      las reglas y el registro; no captura video. Todo acceso a una grabación queda auditado.
-    </p>
-
-    <div id="resumen" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem"></div>
+    <h1 style="margin:0 0 1rem;font-size:var(--texto-2xl);color:var(--color-primary)">Videovigilancia</h1>
 
     <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
       <button class="tab boton boton-secundario activa" data-tab="monitoreo" style="width:auto">Monitoreo en vivo</button>
       <button class="tab boton boton-secundario" data-tab="detecciones" style="width:auto">Detecciones</button>
       <button class="tab boton boton-secundario" data-tab="camaras" style="width:auto">Cámaras</button>
-      <button class="tab boton boton-secundario" data-tab="consentimientos" style="width:auto">Consentimientos</button>
-      <button class="tab boton boton-secundario" data-tab="grabaciones" style="width:auto">Grabaciones</button>
     </div>
 
     <div id="panel"></div>

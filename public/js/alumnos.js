@@ -239,10 +239,10 @@ async function verAlumno(id) {
 
         <!-- Pestañas -->
         <div class="ficha-tabs">
-          <button class="ficha-tab activa" data-ft="datos">Datos</button>
-          <button class="ficha-tab" data-ft="encargados">Encargados</button>
-          <button class="ficha-tab" data-ft="historial">Historial</button>
-          <button class="ficha-tab" data-ft="comportamiento">Comportamiento</button>
+          <button type="button" class="ficha-tab activa" data-ft="datos">Datos</button>
+          <button type="button" class="ficha-tab" data-ft="encargados">Encargados</button>
+          <button type="button" class="ficha-tab" data-ft="historial">Historial</button>
+          <button type="button" class="ficha-tab" data-ft="comportamiento">Comportamiento</button>
         </div>
 
         <div class="ficha-panel" data-panel="datos">
