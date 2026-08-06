@@ -189,31 +189,119 @@ function formularioTraslado(matriculaId) {
 async function verAlumno(id) {
   try {
     const { alumno: a } = await api(`/api/alumnos/${id}`);
-    const fila = (k, v) => `<dt style="color:var(--color-text-muted)">${escapar(k)}</dt><dd style="margin:0">${escapar(v ?? '—')}</dd>`;
+    // Traer el resumen de comportamiento en paralelo (no bloquea si falla).
+    let comp = null;
+    try { comp = await api(`/api/comportamiento/alumno/${id}`); } catch { /* opcional */ }
 
-    abrirDialogo(a.nombreCompleto, `
-      <dl style="display:grid;grid-template-columns:auto 1fr;gap:.5rem 1.5rem;margin:0 0 1.5rem">
-        ${fila('Código', a.codigo)}
-        ${a.identidad !== undefined ? fila('Identidad', a.identidad) : ''}
-        ${fila('Nacimiento', a.fechaNacimiento?.slice(0, 10))}
-        ${fila('Teléfono', a.telefono)}
-        ${fila('Matrícula', a.matricula ? `${a.matricula.grado} "${a.matricula.seccion.split(' ')[1] ?? ''}" — ${a.matricula.anio}` : 'sin matrícula')}
-        ${fila('Estado', a.estado)}
-      </dl>
-      <h3 style="font-size:var(--texto-base)">Encargados</h3>
-      ${a.encargados.length
-        ? `<ul style="margin:0 0 1.5rem;padding-left:1.2rem">${a.encargados.map((e) =>
-          `<li>${escapar(e.nombre)} — ${escapar(e.parentesco)}${e.telefono ? ` · ${escapar(e.telefono)}` : ''}</li>`).join('')}</ul>`
-        : '<p style="color:var(--color-text-muted)">Sin encargados registrados.</p>'}
-      <h3 style="font-size:var(--texto-base)">Historial académico</h3>
-      ${a.historial.length
-        ? `<table class="tabla"><tbody>${a.historial.map((h) =>
-          `<tr><td>${h.anio}</td><td>${escapar(h.grado_nombre)} "${escapar(h.letra)}"</td><td>${escapar(h.estado)}</td></tr>`).join('')}</tbody></table>`
-        : '<p style="color:var(--color-text-muted)">Sin matrículas previas.</p>'}`, null);
+    // Iniciales para el avatar.
+    const iniciales = a.nombreCompleto.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]).join('').toUpperCase();
+    const mat = a.matricula ? `${a.matricula.grado} "${a.matricula.seccion.split(' ')[1] ?? ''}"` : 'Sin matrícula';
+
+    // Color del puntaje de comportamiento.
+    const pts = comp?.puntaje ?? null;
+    const colorPts = pts === null ? 'var(--color-text-muted)'
+      : pts >= 85 ? 'var(--color-exito)' : pts >= 60 ? 'var(--color-advertencia)' : 'var(--color-error)';
+
+    const html = `
+      <div class="ficha">
+        <!-- Encabezado con avatar -->
+        <div class="ficha-cabecera">
+          <div class="ficha-avatar">${escapar(iniciales)}</div>
+          <div class="ficha-titulo">
+            <h2 style="margin:0">${escapar(a.nombreCompleto)}</h2>
+            <div class="ficha-sub">
+              <span class="insignia-estado estado-${escapar(a.estado)}">${escapar(a.estado)}</span>
+              <span>${escapar(a.codigo)}</span>
+              <span>·</span>
+              <span>${escapar(mat)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjetas resumen -->
+        <div class="ficha-stats">
+          <div class="ficha-mini">
+            <span class="ficha-mini-label">Comportamiento</span>
+            <span class="ficha-mini-valor" style="color:${colorPts}">${pts === null ? '—' : pts}</span>
+            <span class="ficha-mini-nota">${comp ? `${comp.meritos} méritos · ${comp.demeritos} faltas` : 'sin datos'}</span>
+          </div>
+          <div class="ficha-mini">
+            <span class="ficha-mini-label">Encargados</span>
+            <span class="ficha-mini-valor">${a.encargados.length}</span>
+            <span class="ficha-mini-nota">registrados</span>
+          </div>
+          <div class="ficha-mini">
+            <span class="ficha-mini-label">Historial</span>
+            <span class="ficha-mini-valor">${a.historial.length}</span>
+            <span class="ficha-mini-nota">matrículas</span>
+          </div>
+        </div>
+
+        <!-- Pestañas -->
+        <div class="ficha-tabs">
+          <button class="ficha-tab activa" data-ft="datos">Datos</button>
+          <button class="ficha-tab" data-ft="encargados">Encargados</button>
+          <button class="ficha-tab" data-ft="historial">Historial</button>
+          <button class="ficha-tab" data-ft="comportamiento">Comportamiento</button>
+        </div>
+
+        <div class="ficha-panel" data-panel="datos">
+          <dl class="ficha-dl">
+            ${fichaFila('Código', a.codigo)}
+            ${a.identidad !== undefined ? fichaFila('Identidad', a.identidad) : ''}
+            ${fichaFila('Nacimiento', a.fechaNacimiento?.slice(0, 10))}
+            ${fichaFila('Teléfono', a.telefono)}
+            ${fichaFila('Matrícula', mat + (a.matricula ? ` — ${a.matricula.anio}` : ''))}
+            ${fichaFila('Estado', a.estado)}
+          </dl>
+        </div>
+
+        <div class="ficha-panel" data-panel="encargados" hidden>
+          ${a.encargados.length
+            ? a.encargados.map((e) => `
+              <div class="ficha-item">
+                <b>${escapar(e.nombre)}</b>
+                <span>${escapar(e.parentesco)}${e.telefono ? ` · ${escapar(e.telefono)}` : ''}</span>
+              </div>`).join('')
+            : '<p class="ficha-vacio">Sin encargados registrados.</p>'}
+        </div>
+
+        <div class="ficha-panel" data-panel="historial" hidden>
+          ${a.historial.length
+            ? `<table class="tabla"><thead><tr><th>Año</th><th>Grado</th><th>Estado</th></tr></thead><tbody>${a.historial.map((h) =>
+              `<tr><td>${h.anio}</td><td>${escapar(h.grado_nombre)} "${escapar(h.letra)}"</td><td>${escapar(h.estado)}</td></tr>`).join('')}</tbody></table>`
+            : '<p class="ficha-vacio">Sin matrículas previas.</p>'}
+        </div>
+
+        <div class="ficha-panel" data-panel="comportamiento" hidden>
+          ${comp && comp.registros.length
+            ? comp.registros.map((r) => {
+                const esMerito = r.clase === 'merito';
+                return `<div class="ficha-conducta ${esMerito ? 'merito' : 'demerito'}">
+                  <div class="conducta-signo">${esMerito ? '+' : ''}${r.puntos}</div>
+                  <div class="conducta-cuerpo">
+                    <b>${escapar(r.descripcion)}</b>
+                    <span>${new Date(r.fecha_hora).toLocaleDateString('es-HN')}${r.clase_nombre ? ` · ${escapar(r.clase_nombre)}` : ''}${r.registrado_por ? ` · ${escapar(r.registrado_por)}` : ''}</span>
+                  </div>
+                </div>`;
+              }).join('')
+            : '<p class="ficha-vacio">Sin registros de comportamiento.</p>'}
+        </div>
+      </div>`;
+
+    abrirDialogo('', html, null);
+
+    // Navegación de pestañas dentro de la ficha.
+    document.querySelectorAll('.ficha-tab').forEach((t) => t.addEventListener('click', () => {
+      document.querySelectorAll('.ficha-tab').forEach((x) => x.classList.toggle('activa', x === t));
+      document.querySelectorAll('.ficha-panel').forEach((p) => { p.hidden = p.dataset.panel !== t.dataset.ft; });
+    }));
   } catch (e) {
     avisar(e.message);
   }
 }
+
+const fichaFila = (k, v) => `<dt>${escapar(k)}</dt><dd>${escapar(v ?? '—')}</dd>`;
 
 (async () => {
   usuario = await iniciarPantalla('Alumnos');

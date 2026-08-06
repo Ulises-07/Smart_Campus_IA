@@ -513,22 +513,29 @@ async function detectarLazo() {
   let predicciones = [];
   try { predicciones = await modelo.detect(video); } catch { /* frame perdido */ }
 
+  // Color de la caja según el nivel de peligro del objeto.
+  const COLOR_NIVEL = { critico: '#dc2626', alto: '#f97316', medio: '#eab308', bajo: '#38bdf8' };
+
   for (const p of predicciones) {
-    const peligroso = clasesVigiladas[p.class];
+    const info = clasesVigiladas[p.class];   // { etiqueta, nivel } o undefined
     const [x, y, w, h] = p.bbox;
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = peligroso ? '#ef4444' : '#38bdf8';
+    const nivel = info?.nivel;
+    const color = nivel ? (COLOR_NIVEL[nivel] || '#dc2626') : '#38bdf8';
+
+    ctx.lineWidth = nivel === 'critico' ? 4 : 3;
+    ctx.strokeStyle = color;
     ctx.strokeRect(x, y, w, h);
-    ctx.font = '16px sans-serif';
-    const etiqueta = `${peligroso ?? p.class} ${Math.round(p.score * 100)}%`;
-    ctx.fillStyle = peligroso ? '#ef4444' : '#38bdf8';
+    ctx.font = 'bold 15px sans-serif';
+    const nombre = info?.etiqueta ?? p.class;
+    const etiqueta = `${nombre} ${Math.round(p.score * 100)}%${nivel ? ` · ${nivel.toUpperCase()}` : ''}`;
+    ctx.fillStyle = color;
     const tw = ctx.measureText(etiqueta).width;
-    ctx.fillRect(x, y - 20, tw + 10, 20);
+    ctx.fillRect(x, y - 22, tw + 12, 22);
     ctx.fillStyle = '#fff';
-    ctx.fillText(etiqueta, x + 5, y - 5);
+    ctx.fillText(etiqueta, x + 6, y - 6);
 
     // Si es peligroso y con confianza razonable, se reporta al servidor.
-    if (peligroso && p.score >= 0.6) reportarDeteccion(p.class, p.score, etiqueta);
+    if (info && p.score >= 0.6) reportarDeteccion(p.class, p.score, etiqueta, nivel);
   }
 
   if (lazoActivo) requestAnimationFrame(detectarLazo);

@@ -354,14 +354,146 @@ function subirMaterial() {
   }
 }
 
+// ---------- COMPORTAMIENTO ----------
+let catalogoComp = null;
+
+async function cargarComportamiento() {
+  const panel = $('panel-comportamiento');
+  panel.innerHTML = '<p style="color:var(--color-text-muted)">Cargando…</p>';
+
+  try {
+    // Alumnos de la clase (del cuadro) y catálogo de tipos, en paralelo.
+    const [cuadro, cat] = await Promise.all([
+      api(`/api/clases/${claseId}/cuadro?periodoId=${periodoId}`),
+      catalogoComp ? Promise.resolve({ catalogo: catalogoComp }) : api('/api/comportamiento/catalogo'),
+    ]);
+    catalogoComp = cat.catalogo;
+    const alumnos = cuadro.alumnos || [];
+
+    if (!alumnos.length) {
+      panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Sin alumnos inscritos en esta clase.</p></div>';
+      return;
+    }
+
+    const opcionesAlumnos = alumnos.map((a) => `<option value="${a.alumnoId}">${escapar(a.nombre)}</option>`).join('');
+    const opcMeritos = catalogoComp.meritos.map((t) => `<option value="m-${t.id}">＋ ${escapar(t.nombre)} (+${t.puntos})</option>`).join('');
+    const opcDemeritos = catalogoComp.demeritos.map((t) => `<option value="d-${t.id}">－ ${escapar(t.nombre)} (${t.puntos})</option>`).join('');
+
+    panel.innerHTML = `
+      <div class="tarjeta" style="margin-bottom:1rem">
+        <h3 style="margin:0 0 1rem;font-size:var(--texto-base)">Registrar comportamiento</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem 1rem">
+          <div class="campo" style="margin:0">
+            <label>Alumno</label>
+            <select id="cmp-alumno" class="control">${opcionesAlumnos}</select>
+          </div>
+          <div class="campo" style="margin:0">
+            <label>Tipo</label>
+            <select id="cmp-tipo" class="control">
+              <optgroup label="Méritos (buena conducta)">${opcMeritos}</optgroup>
+              <optgroup label="Deméritos (faltas)">${opcDemeritos}</optgroup>
+            </select>
+          </div>
+          <div class="campo" style="margin:0;grid-column:1/-1">
+            <label>Detalle / observación</label>
+            <input id="cmp-desc" class="control" placeholder="Describe brevemente lo ocurrido…" maxlength="2000">
+          </div>
+          <div class="campo" style="margin:0;grid-column:1/-1" id="cmp-medida-wrap" hidden>
+            <label>Medida disciplinaria (opcional)</label>
+            <input id="cmp-medida" class="control" placeholder="Ej: llamado de atención, citación a encargado…" maxlength="255">
+          </div>
+        </div>
+        <button class="boton" id="cmp-guardar" style="width:auto;margin-top:1rem">Registrar</button>
+        <div id="cmp-aviso" class="aviso" hidden style="margin-top:1rem"></div>
+      </div>
+      <div id="cmp-historial"></div>`;
+
+    // Mostrar campo de medida solo para deméritos.
+    const selTipo = $('cmp-tipo');
+    const toggleMedida = () => { $('cmp-medida-wrap').hidden = !selTipo.value.startsWith('d-'); };
+    selTipo.onchange = toggleMedida; toggleMedida();
+
+    $('cmp-guardar').onclick = () => registrarComportamiento();
+
+    await cargarHistorialClase(alumnos);
+  } catch (e) {
+    panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
+}
+
+async function registrarComportamiento() {
+  const alumnoId = Number($('cmp-alumno').value);
+  const val = $('cmp-tipo').value;              // 'm-3' o 'd-7'
+  const descripcion = $('cmp-desc').value.trim();
+  const aviso = $('cmp-aviso');
+  if (!descripcion) { aviso.hidden = false; aviso.className = 'aviso aviso-error'; aviso.textContent = 'Escribe un detalle.'; return; }
+
+  const [tipoClase, tipoId] = [val[0], Number(val.slice(2))];
+  try {
+    if (tipoClase === 'm') {
+      await api('/api/comportamiento/meritos', { method: 'POST', body: { alumnoId, claseId, tipoId, descripcion } });
+    } else {
+      // Demérito = incidencia. Se toma la gravedad del catálogo.
+      const tipo = catalogoComp.demeritos.find((t) => t.id === tipoId);
+      await api('/api/incidencias', { method: 'POST', body: {
+        alumnoId, claseId, gravedad: tipo?.gravedad || 'leve',
+        descripcion, medidaDisciplinaria: $('cmp-medida').value.trim() || null,
+      } });
+    }
+    aviso.hidden = false; aviso.className = 'aviso aviso-exito'; aviso.textContent = 'Comportamiento registrado.';
+    $('cmp-desc').value = ''; if ($('cmp-medida')) $('cmp-medida').value = '';
+    const cuadro = await api(`/api/clases/${claseId}/cuadro?periodoId=${periodoId}`);
+    await cargarHistorialClase(cuadro.alumnos || []);
+  } catch (e) {
+    aviso.hidden = false; aviso.className = 'aviso aviso-error'; aviso.textContent = e.message;
+  }
+}
+
+/** Muestra el historial de comportamiento de todos los alumnos de la clase. */
+async function cargarHistorialClase(alumnos) {
+  const cont = $('cmp-historial');
+  if (!cont) return;
+  cont.innerHTML = '<p style="color:var(--color-text-muted)">Cargando historial…</p>';
+
+  // Trae el comportamiento de cada alumno (el backend filtra por permisos).
+  const resultados = await Promise.all(alumnos.map((a) =>
+    api(`/api/comportamiento/alumno/${a.alumnoId}`).then((r) => ({ alumno: a, ...r })).catch(() => null)
+  ));
+
+  const conRegistros = resultados.filter((r) => r && r.total > 0);
+  if (!conRegistros.length) {
+    cont.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Aún no hay registros de comportamiento en esta clase.</p></div>';
+    return;
+  }
+
+  cont.innerHTML = conRegistros.map(({ alumno, registros, puntaje, meritos, demeritos }) => {
+    const color = puntaje >= 85 ? 'var(--color-exito)' : puntaje >= 60 ? 'var(--color-advertencia)' : 'var(--color-error)';
+    const filas = registros.slice(0, 6).map((r) => {
+      const merito = r.clase === 'merito';
+      return `<div class="ficha-conducta ${merito ? 'merito' : 'demerito'}">
+        <div class="conducta-signo">${merito ? '+' : ''}${r.puntos}</div>
+        <div class="conducta-cuerpo"><b>${escapar(r.descripcion)}</b>
+        <span>${new Date(r.fecha_hora).toLocaleDateString('es-HN')}${r.registrado_por ? ` · ${escapar(r.registrado_por)}` : ''}</span></div>
+      </div>`;
+    }).join('');
+    return `<div class="tarjeta" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <b>${escapar(alumno.nombre)}</b>
+        <span style="font-weight:800;color:${color}">${puntaje} pts <span style="font-weight:400;color:var(--color-text-muted);font-size:var(--texto-xs)">· ${meritos}✓ ${demeritos}✗</span></span>
+      </div>${filas}</div>`;
+  }).join('');
+}
+
 function cambiarTab(tab) {
   tabActiva = tab;
   document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('activa', b.dataset.tab === tab));
   $('panel-notas').hidden = tab !== 'notas';
   $('panel-asistencia').hidden = tab !== 'asistencia';
+  $('panel-comportamiento').hidden = tab !== 'comportamiento';
   $('panel-material').hidden = tab !== 'material';
   if (tab === 'notas') cargarNotas();
   else if (tab === 'asistencia') cargarAsistencia();
+  else if (tab === 'comportamiento') cargarComportamiento();
   else cargarMaterial();
 }
 

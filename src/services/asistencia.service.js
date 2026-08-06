@@ -229,3 +229,87 @@ export async function actualizarIncidencia(id, { estado, medidaDisciplinaria, en
   }, ctx);
   return { ok: true };
 }
+
+// ============================================================================
+// COMPORTAMIENTO AMPLIADO — méritos, catálogo y resumen
+//
+// El sistema de comportamiento tiene dos caras: méritos (buena conducta, suman
+// puntos) y deméritos (faltas, restan puntos; viven en `incidencia`). El
+// catálogo `tipo_comportamiento` da opciones predefinidas con su puntaje.
+//
+// Regla de visibilidad (se refuerza en las rutas): el admin ve todo; el maestro
+// solo lo de las clases que imparte.
+// ============================================================================
+
+/** Catálogo de tipos de comportamiento (para los menús del formulario). */
+export async function catalogoComportamiento() {
+  const tipos = await q(
+    "SELECT id, clase, nombre, puntos, gravedad FROM tipo_comportamiento WHERE activo = 1 ORDER BY clase, puntos DESC"
+  );
+  return {
+    meritos: tipos.filter((t) => t.clase === 'merito'),
+    demeritos: tipos.filter((t) => t.clase === 'demerito'),
+  };
+}
+
+/** Registra un MÉRITO (buena conducta). */
+export async function registrarMerito({ alumnoId, claseId, tipoId, puntos, descripcion, fechaHora }, ctx) {
+  const anio = await q("SELECT id FROM anio_lectivo WHERE estado = 'activo' LIMIT 1");
+  if (!anio.length) throw new AppError('No hay ano lectivo activo.', 409, 'SIN_ANIO');
+
+  // Si viene un tipo del catálogo, se toman sus puntos como base.
+  let pts = Number(puntos) || 1;
+  if (tipoId) {
+    const [t] = await q("SELECT puntos FROM tipo_comportamiento WHERE id = ? AND clase = 'merito'", [tipoId]);
+    if (t) pts = t.puntos;
+  }
+
+  return transaccion(async (conn) => {
+    const [r] = await conn.query(
+      `INSERT INTO merito (alumno_id, clase_id, anio_lectivo_id, tipo_id, puntos, descripcion, fecha_hora, registrado_por)
+       VALUES (?,?,?,?,?,?,?,?)`,
+      [alumnoId, claseId ?? null, anio[0].id, tipoId ?? null, pts, descripcion,
+        fechaHora ?? new Date().toISOString().slice(0, 19).replace('T', ' '), ctx?.usuarioId ?? null]
+    );
+    return { id: r.insertId, puntos: pts };
+  }, ctx);
+}
+
+/**
+ * Historial de comportamiento (méritos + deméritos unidos) de un alumno,
+ * ordenado por fecha. Cada fila trae su signo de puntos.
+ */
+export async function comportamientoDeAlumno(alumnoId) {
+  const filas = await q(
+    `SELECT 'merito' AS clase, m.id, m.descripcion, m.fecha_hora, m.puntos, NULL AS gravedad,
+            NULL AS estado, asg.nombre AS clase_nombre,
+            TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS registrado_por
+       FROM merito m
+       LEFT JOIN clase c ON c.id = m.clase_id
+       LEFT JOIN asignatura asg ON asg.id = c.asignatura_id
+       LEFT JOIN usuario u ON u.id = m.registrado_por
+       LEFT JOIN persona p ON p.id = u.persona_id
+      WHERE m.alumno_id = ?
+     UNION ALL
+      SELECT 'demerito' AS clase, inc.id, inc.descripcion, inc.fecha_hora,
+             COALESCE(NULLIF(inc.puntos,0), CASE inc.gravedad WHEN 'leve' THEN -3 WHEN 'grave' THEN -8 ELSE -20 END) AS puntos,
+             inc.gravedad, inc.estado, asg.nombre AS clase_nombre,
+             TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS registrado_por
+       FROM incidencia inc
+       LEFT JOIN clase c ON c.id = inc.clase_id
+       LEFT JOIN asignatura asg ON asg.id = c.asignatura_id
+       LEFT JOIN usuario u ON u.id = inc.registrado_por
+       LEFT JOIN persona p ON p.id = u.persona_id
+      WHERE inc.alumno_id = ?
+      ORDER BY fecha_hora DESC`,
+    [alumnoId, alumnoId]
+  );
+
+  // Puntaje base 100; suman méritos, restan deméritos. Nunca baja de 0.
+  const suma = filas.reduce((acc, f) => acc + Number(f.puntos), 0);
+  const puntaje = Math.max(0, Math.min(100, 100 + suma));
+  const meritos = filas.filter((f) => f.clase === 'merito').length;
+  const demeritos = filas.filter((f) => f.clase === 'demerito').length;
+
+  return { registros: filas, puntaje, meritos, demeritos, total: filas.length };
+}

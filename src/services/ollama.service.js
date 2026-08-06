@@ -81,7 +81,14 @@ export async function generar({ system, contexto = '', pregunta }) {
         system: systemDefensivo,
         prompt,
         stream: false,
-        options: { temperature: 0.3 },
+        options: {
+          // Temperatura más alta = respuestas más naturales y variadas (menos
+          // robóticas), sin perder coherencia. top_p y repeat_penalty ayudan a
+          // que fluya mejor y no repita muletillas.
+          temperature: 0.7,
+          top_p: 0.9,
+          repeat_penalty: 1.15,
+        },
       }),
     });
     const datos = await respuesta.json();

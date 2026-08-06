@@ -340,10 +340,13 @@ export async function objetosPeligrosos() {
   return q('SELECT id, clase, etiqueta, activo FROM objeto_peligroso ORDER BY etiqueta');
 }
 
-/** Solo las clases activas, en un arreglo simple: lo que el navegador debe vigilar. */
+/**
+ * Solo las clases activas: lo que el navegador debe vigilar. Cada entrada trae
+ * su etiqueta en español y su nivel de peligro, para colorear la alerta.
+ */
 export async function clasesVigiladas() {
-  const filas = await q("SELECT clase, etiqueta FROM objeto_peligroso WHERE activo = 1");
-  return Object.fromEntries(filas.map((f) => [f.clase, f.etiqueta]));
+  const filas = await q("SELECT clase, etiqueta, nivel FROM objeto_peligroso WHERE activo = 1");
+  return Object.fromEntries(filas.map((f) => [f.clase, { etiqueta: f.etiqueta, nivel: f.nivel }]));
 }
 
 /** Activa o desactiva un objeto de la lista de peligrosos. */

@@ -563,3 +563,67 @@ h2, h3 { color: var(--color-text); }
   .barra-superior .usuario-nombre { display: none; }
   .contenido { padding: var(--esp-6) var(--esp-3); }
 }
+
+/* ============================================================
+   Ficha de alumno (rediseño elegante)
+   ============================================================ */
+.ficha { animation: aparecer var(--trans-media) both; }
+.ficha-cabecera { display: flex; align-items: center; gap: var(--esp-4); margin-bottom: var(--esp-6); }
+.ficha-avatar {
+  width: 64px; height: 64px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--grad-marca);
+  color: var(--color-sobre-marca);
+  display: grid; place-items: center;
+  font-size: var(--texto-xl); font-weight: 800;
+  border: 2px solid var(--color-accent-fuerte);
+}
+.ficha-titulo h2 { color: var(--color-text); font-size: var(--texto-xl); }
+.ficha-sub { display: flex; align-items: center; gap: var(--esp-2); flex-wrap: wrap; margin-top: var(--esp-1); color: var(--color-text-muted); font-size: var(--texto-sm); }
+
+.ficha-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--esp-3); margin-bottom: var(--esp-6); }
+.ficha-mini {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radio-md);
+  padding: var(--esp-4);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.ficha-mini-label { font-size: var(--texto-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.ficha-mini-valor { font-size: var(--texto-2xl); font-weight: 800; color: var(--color-text); line-height: 1.1; }
+.ficha-mini-nota { font-size: var(--texto-xs); color: var(--color-text-suave); }
+
+.ficha-tabs { display: flex; gap: var(--esp-1); border-bottom: 1px solid var(--color-border); margin-bottom: var(--esp-4); flex-wrap: wrap; }
+.ficha-tab {
+  padding: var(--esp-2) var(--esp-4);
+  background: none; border: none; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: var(--texto-sm);
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--trans-rapida), border-color var(--trans-rapida);
+}
+.ficha-tab:hover { color: var(--color-text); }
+.ficha-tab.activa { color: var(--color-primary); border-bottom-color: var(--color-accent-fuerte); }
+:root[data-tema="oscuro"] .ficha-tab.activa { color: var(--color-accent); }
+
+.ficha-panel { animation: aparecer-suave var(--trans-rapida) both; }
+.ficha-dl { display: grid; grid-template-columns: auto 1fr; gap: var(--esp-3) var(--esp-6); margin: 0; }
+.ficha-dl dt { color: var(--color-text-muted); font-weight: 600; font-size: var(--texto-sm); }
+.ficha-dl dd { margin: 0; color: var(--color-text); }
+.ficha-item { padding: var(--esp-3); border: 1px solid var(--color-border); border-radius: var(--radio-md); margin-bottom: var(--esp-2); }
+.ficha-item b { display: block; color: var(--color-text); }
+.ficha-item span { font-size: var(--texto-sm); color: var(--color-text-muted); }
+.ficha-vacio { color: var(--color-text-muted); text-align: center; padding: var(--esp-6); }
+
+/* Registros de conducta */
+.ficha-conducta { display: flex; gap: var(--esp-3); align-items: center; padding: var(--esp-3); border-radius: var(--radio-md); margin-bottom: var(--esp-2); border: 1px solid var(--color-border); }
+.ficha-conducta.merito { border-left: 3px solid var(--color-exito); }
+.ficha-conducta.demerito { border-left: 3px solid var(--color-error); }
+.conducta-signo { font-weight: 800; font-size: var(--texto-lg); min-width: 42px; text-align: center; }
+.ficha-conducta.merito .conducta-signo { color: var(--color-exito); }
+.ficha-conducta.demerito .conducta-signo { color: var(--color-error); }
+.conducta-cuerpo b { display: block; color: var(--color-text); font-size: var(--texto-sm); }
+.conducta-cuerpo span { font-size: var(--texto-xs); color: var(--color-text-muted); }
+
+@media (max-width: 560px) { .ficha-stats { grid-template-columns: 1fr; } }

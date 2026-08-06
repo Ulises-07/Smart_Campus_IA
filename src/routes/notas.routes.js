@@ -240,3 +240,39 @@ notasRouter.patch('/incidencias/:id', requiereRol(ROLES.ADMIN, ROLES.MAESTRO), a
 
   res.json({ ok: true, ...(await asistencia.actualizarIncidencia(Number(req.params.id), datos, contextoDe(req))) });
 }));
+
+// ============================================================================
+// Comportamiento: catálogo, méritos y resumen por alumno
+// ============================================================================
+
+// Catálogo de tipos (méritos/deméritos) para los formularios.
+notasRouter.get('/comportamiento/catalogo', requiereRol(ROLES.ADMIN, ROLES.MAESTRO), asyncHandler(async (req, res) => {
+  res.json({ ok: true, catalogo: await asistencia.catalogoComportamiento() });
+}));
+
+// Registrar un mérito. El maestro solo a alumnos que puede ver.
+notasRouter.post('/comportamiento/meritos', requiereRol(ROLES.ADMIN, ROLES.MAESTRO), asyncHandler(async (req, res) => {
+  const datos = validar(z.object({
+    alumnoId: z.coerce.number().int().positive(),
+    claseId: z.coerce.number().int().positive().optional().nullable(),
+    tipoId: z.coerce.number().int().positive().optional().nullable(),
+    puntos: z.coerce.number().int().optional(),
+    descripcion: z.string().trim().min(1).max(2000),
+    fechaHora: z.string().optional(),
+  }), req.body);
+
+  if (req.usuario.rol === ROLES.MAESTRO && !(await puedeVerAlumno(req.usuario, datos.alumnoId))) {
+    throw new AppError('No se encontro el alumno.', 404, 'NO_ENCONTRADO');
+  }
+  res.status(201).json({ ok: true, ...(await asistencia.registrarMerito(datos, contextoDe(req))) });
+}));
+
+// Resumen de comportamiento de un alumno (méritos + deméritos + puntaje).
+// Admin: cualquier alumno. Maestro: solo alumnos que puede ver.
+notasRouter.get('/comportamiento/alumno/:id', requiereRol(ROLES.ADMIN, ROLES.MAESTRO, ROLES.ASESOR), asyncHandler(async (req, res) => {
+  const alumnoId = Number(req.params.id);
+  if (req.usuario.rol === ROLES.MAESTRO && !(await puedeVerAlumno(req.usuario, alumnoId))) {
+    throw new AppError('No se encontro el alumno.', 404, 'NO_ENCONTRADO');
+  }
+  res.json({ ok: true, ...(await asistencia.comportamientoDeAlumno(alumnoId)) });
+}));
