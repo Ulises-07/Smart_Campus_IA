@@ -491,10 +491,119 @@ function cambiarTab(tab) {
   $('panel-asistencia').hidden = tab !== 'asistencia';
   $('panel-comportamiento').hidden = tab !== 'comportamiento';
   $('panel-material').hidden = tab !== 'material';
+
+  // El alumno ve su vista personal (solo lo suyo) en cada pestaña.
+  if (usuario.rol === 'ALUMNO') {
+    if (tab === 'notas') cargarMisNotas();
+    else if (tab === 'asistencia') cargarMiAsistencia();
+    else if (tab === 'comportamiento') cargarMiComportamiento();
+    else cargarMaterial();
+    return;
+  }
+
   if (tab === 'notas') cargarNotas();
   else if (tab === 'asistencia') cargarAsistencia();
   else if (tab === 'comportamiento') cargarComportamiento();
   else cargarMaterial();
+}
+
+// ---------- Vista personal del ALUMNO ----------
+// El alumno no puede ver el cuadro de toda la clase; solo lo suyo. Estas
+// funciones usan los endpoints que ya filtran por alumno (puedeVerAlumno).
+
+async function cargarMisNotas() {
+  const panel = $('panel-notas');
+  panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
+  try {
+    const r = await api(`/api/alumnos/${usuario.alumnoId}/notas?periodoId=${periodoId}`);
+    // La respuesta trae una fila por clase; nos quedamos con la de ESTA clase.
+    const fila = (r.notas || []).find((n) => n.clase_id === claseId);
+    const boleta = `<a class="boton-mini" href="/api/alumnos/${usuario.alumnoId}/boleta?periodoId=${periodoId}" target="_blank">Descargar mi boleta</a>`;
+
+    if (!fila || fila.nota_final === null || fila.nota_final === undefined) {
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">${boleta}</div>
+        <div class="tarjeta"><p style="color:var(--color-text-muted)">Aún no tienes una nota registrada en esta clase para el periodo seleccionado.</p></div>`;
+      return;
+    }
+
+    const aprobado = fila.aprobado === 1 || fila.aprobado === true;
+    const color = aprobado ? 'var(--color-aprobado)' : 'var(--color-reprobado)';
+    panel.innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">${boleta}</div>
+      <div class="tarjeta" style="text-align:center">
+        <div style="font-size:var(--texto-xs);text-transform:uppercase;color:var(--color-text-muted)">Mi nota en ${escapar(fila.asignatura || 'esta clase')}</div>
+        <div style="font-size:var(--texto-3xl);font-weight:700;color:${color}">${fila.nota_final}</div>
+        <span class="insignia-estado ${aprobado ? 'estado-activo' : ''}" style="color:${color}">${aprobado ? 'Aprobado' : 'Reprobado'}</span>
+        ${fila.bloqueada ? '<div style="font-size:var(--texto-sm);color:var(--color-text-muted);margin-top:.5rem">🔒 Nota cerrada</div>' : ''}
+      </div>`;
+  } catch (e) {
+    panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
+}
+
+async function cargarMiAsistencia() {
+  const panel = $('panel-asistencia');
+  panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
+  try {
+    const r = await api(`/api/alumnos/${usuario.alumnoId}/asistencia`);
+    const resumen = r.resumen || [];
+    // Buscar el resumen de ESTA clase.
+    const c = resumen.find((x) => x.claseId === claseId);
+    if (!c || c.total === 0) {
+      panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Aún no hay asistencia registrada en esta clase.</p></div>';
+      return;
+    }
+    const colorPct = c.enRiesgo ? 'var(--color-reprobado)' : 'var(--color-aprobado)';
+    const dato = (t, v, color) => `
+      <div class="tarjeta" style="text-align:center">
+        <div style="font-size:var(--texto-xs);text-transform:uppercase;color:var(--color-text-muted)">${t}</div>
+        <div style="font-size:var(--texto-2xl);font-weight:700;color:${color || 'var(--color-text)'}">${v}</div>
+      </div>`;
+    panel.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin-bottom:1rem">
+        ${dato('Presente', c.presentes, 'var(--color-aprobado)')}
+        ${dato('Ausente', c.ausencias, 'var(--color-reprobado)')}
+        ${dato('Tarde', c.tardanzas, 'var(--color-advertencia)')}
+        ${dato('Justificado', c.justificadas)}
+      </div>
+      <div class="tarjeta" style="text-align:center">
+        <div style="font-size:var(--texto-xs);text-transform:uppercase;color:var(--color-text-muted)">Mi inasistencia</div>
+        <div style="font-size:var(--texto-2xl);font-weight:700;color:${colorPct}">${c.porcentajeInasistencia}%</div>
+        ${c.enRiesgo ? '<span class="insignia-estado" style="color:var(--color-reprobado)">En riesgo por inasistencia</span>' : '<span class="insignia-estado estado-activo">Al día</span>'}
+      </div>`;
+  } catch (e) {
+    panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
+}
+
+async function cargarMiComportamiento() {
+  const panel = $('panel-comportamiento');
+  panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
+  try {
+    const r = await api(`/api/comportamiento/alumno/${usuario.alumnoId}`);
+    const puntaje = r.puntaje ?? 100;
+    const color = puntaje >= 80 ? 'var(--color-aprobado)' : puntaje >= 60 ? 'var(--color-advertencia)' : 'var(--color-reprobado)';
+    const registros = r.registros || [];
+    const lista = registros.length
+      ? registros.map((x) => {
+          const esMerito = x.clase === 'merito';
+          return `<div class="tarjeta" style="border-left:3px solid ${esMerito ? 'var(--color-aprobado)' : 'var(--color-reprobado)'};margin-bottom:.5rem">
+            <b>${esMerito ? '+' : ''}${x.puntos} · ${escapar(x.descripcion || '')}</b>
+            <div style="font-size:var(--texto-sm);color:var(--color-text-muted)">${x.fecha_hora ? new Date(x.fecha_hora).toLocaleDateString('es-HN') : ''}</div>
+          </div>`;
+        }).join('')
+      : '<div class="tarjeta"><p style="color:var(--color-text-muted)">Sin registros de comportamiento.</p></div>';
+    panel.innerHTML = `
+      <div class="tarjeta" style="margin-bottom:1rem;text-align:center">
+        <div style="font-size:var(--texto-xs);text-transform:uppercase;color:var(--color-text-muted)">Mi puntaje de conducta</div>
+        <div style="font-size:var(--texto-3xl);font-weight:700;color:${color}">${puntaje}</div>
+        <div style="font-size:var(--texto-sm);color:var(--color-text-muted)">${r.meritos ?? 0} méritos · ${r.demeritos ?? 0} deméritos</div>
+      </div>
+      ${lista}`;
+  } catch (e) {
+    panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
 }
 
 (async () => {

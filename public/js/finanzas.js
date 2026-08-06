@@ -206,11 +206,32 @@ function cambiarTab(tab) {
 
   // Un alumno solo ve su propia cuenta: no hay buscador para él.
   if (usuario.rol === 'ALUMNO') {
-    document.querySelector('[data-tab="morosidad"]').hidden = true;
-    $('panel-cuenta').querySelector('.tarjeta').hidden = true;
-    // Su listado de alumnos contiene solo a él mismo (filtro por fila de la Fase 3).
-    const lista = await api('/api/alumnos?porPagina=1');
-    if (lista.datos[0]) verCuenta(lista.datos[0].id, lista.datos[0].nombreCompleto);
+    // Ocultar la pestaña de morosidad y el buscador, con guardas por si no existen.
+    const tabMoro = document.querySelector('[data-tab="morosidad"]');
+    if (tabMoro) tabMoro.hidden = true;
+    const buscador = $('panel-cuenta')?.querySelector('.tarjeta');
+    if (buscador) buscador.hidden = true;
+
+    // Usa su propio alumnoId del perfil (lo trae /api/auth/yo). Si por alguna
+    // razón no está, cae al listado que ya viene filtrado a solo él mismo.
+    try {
+      let alumnoId = usuario.alumnoId;
+      let nombre = usuario.persona?.nombreCompleto || 'Mi cuenta';
+      if (!alumnoId) {
+        const lista = await api('/api/alumnos?porPagina=1');
+        if (lista.datos && lista.datos[0]) {
+          alumnoId = lista.datos[0].id;
+          nombre = lista.datos[0].nombreCompleto;
+        }
+      }
+      if (alumnoId) {
+        await verCuenta(alumnoId, nombre);
+      } else {
+        $('cuenta').innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">No se encontró tu matrícula. Consulta con administración.</p></div>';
+      }
+    } catch (e) {
+      $('cuenta').innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+    }
     return;
   }
 

@@ -152,6 +152,14 @@ async function asignar(dia, bloqueId) {
     llenarValores();
     const propio = catalogos.maestros.find((m) => m.id === usuario.id);
     if (propio) $('f-valor').value = propio.id;
+  } else if (usuario.rol === 'ALUMNO') {
+    // El alumno solo ve el horario de SU sección actual, sin poder cambiarlo.
+    $('f-vista').value = 'seccion';
+    llenarValores();
+    if (usuario.seccionId) $('f-valor').value = usuario.seccionId;
+    // Ocultar los selectores: no hay nada que elegir.
+    const filtros = $('f-vista').closest('div');
+    if (filtros) filtros.style.display = 'none';
   } else {
     llenarValores();
   }

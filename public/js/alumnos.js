@@ -122,12 +122,44 @@ function formularioNuevo() {
     try {
       const r = await api('/api/alumnos', { method: 'POST', body: cuerpo });
       dlg.close();
-      avisar(`Alumno ${r.alumno.codigo} registrado. Ahora puedes matricularlo.`, 'exito');
+      // Si se creó el acceso del alumno, mostrar sus credenciales para anotarlas.
+      if (r.credenciales) {
+        mostrarCredenciales(r.alumno.codigo, r.credenciales);
+      } else {
+        avisar(`Alumno ${r.alumno.codigo} registrado. Ahora puedes matricularlo.`, 'exito');
+      }
       cargarLista();
     } catch (e) {
       avisoDialogo(e.message, e.detalles);
     }
   }, 'Registrar');
+}
+
+/**
+ * Muestra en un diálogo las credenciales de acceso del alumno recién creado,
+ * para que quien lo registró las anote y se las entregue. La contraseña es
+ * temporal: el alumno la cambia en su primer ingreso.
+ */
+function mostrarCredenciales(codigo, cred) {
+  const html = `
+    <div class="ficha">
+      <h2 style="margin:0 0 .5rem;color:var(--color-primary)">Alumno ${escapar(codigo)} registrado</h2>
+      <p style="color:var(--color-text-muted);margin:0 0 1rem">
+        Se creó su acceso al sistema. Anota estos datos y entrégaselos al alumno.
+        Deberá cambiar la contraseña en su primer ingreso.
+      </p>
+      <div class="tarjeta" style="border-left:3px solid var(--color-accent-fuerte);background:var(--color-surface-alt)">
+        <div style="margin-bottom:.75rem">
+          <div style="font-size:var(--texto-xs);text-transform:uppercase;color:var(--color-text-muted)">Usuario</div>
+          <div style="font-size:var(--texto-lg);font-weight:700;font-family:var(--fuente-mono,monospace)">${escapar(cred.usuario)}</div>
+        </div>
+        <div>
+          <div style="font-size:var(--texto-xs);text-transform:uppercase;color:var(--color-text-muted)">Contraseña temporal</div>
+          <div style="font-size:var(--texto-lg);font-weight:700;font-family:var(--fuente-mono,monospace)">${escapar(cred.passwordTemporal)}</div>
+        </div>
+      </div>
+    </div>`;
+  abrirDialogo('', html, null);
 }
 
 function opcionesSeccion(excluir = null) {

@@ -228,6 +228,21 @@ export async function perfil(usuarioId) {
   );
 
   u.persona.identidad = usaCifrado ? descifrar(filas[0]?.ident) : filas[0]?.ident ?? null;
+
+  // Si el usuario es un alumno, adjuntamos su alumnoId y su sección actual, para
+  // que el frontend pueda mostrarle su horario, su cuenta y sus clases sin
+  // pedirle elegir. `rol` es el código (ALUMNO), no el nombre bonito.
+  if (u.rol === 'ALUMNO') {
+    const [al] = await q(
+      `SELECT a.id AS alumnoId, m.seccion_id AS seccionId
+         FROM alumno a
+         LEFT JOIN matricula m ON m.alumno_id = a.id AND m.estado = 'activa'
+        WHERE a.persona_id = ? LIMIT 1`,
+      [u.persona.id]
+    );
+    if (al) { u.alumnoId = al.alumnoId; u.seccionId = al.seccionId ?? null; }
+  }
+
   return u;
 }
 

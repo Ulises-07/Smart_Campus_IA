@@ -269,9 +269,10 @@ notasRouter.post('/comportamiento/meritos', requiereRol(ROLES.ADMIN, ROLES.MAEST
 
 // Resumen de comportamiento de un alumno (méritos + deméritos + puntaje).
 // Admin: cualquier alumno. Maestro: solo alumnos que puede ver.
-notasRouter.get('/comportamiento/alumno/:id', requiereRol(ROLES.ADMIN, ROLES.MAESTRO, ROLES.ASESOR), asyncHandler(async (req, res) => {
+notasRouter.get('/comportamiento/alumno/:id', requiereRol(ROLES.ADMIN, ROLES.MAESTRO, ROLES.ASESOR, ROLES.ALUMNO), asyncHandler(async (req, res) => {
   const alumnoId = Number(req.params.id);
-  if (req.usuario.rol === ROLES.MAESTRO && !(await puedeVerAlumno(req.usuario, alumnoId))) {
+  // Maestro y alumno solo pueden ver a quien les corresponde (su clase / él mismo).
+  if ((req.usuario.rol === ROLES.MAESTRO || req.usuario.rol === ROLES.ALUMNO) && !(await puedeVerAlumno(req.usuario, alumnoId))) {
     throw new AppError('No se encontro el alumno.', 404, 'NO_ENCONTRADO');
   }
   res.json({ ok: true, ...(await asistencia.comportamientoDeAlumno(alumnoId)) });

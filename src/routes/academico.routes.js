@@ -105,8 +105,12 @@ academicoRouter.get('/alumnos/:id',
 
 academicoRouter.post('/alumnos', soloGestion, asyncHandler(async (req, res) => {
   const datos = validar(esquemaAlumno, req.body);
-  const id = await alumnos.crear(datos, contextoDe(req));
-  res.status(201).json({ ok: true, alumno: await alumnos.obtener(req.usuario, id) });
+  const resultado = await alumnos.crear(datos, contextoDe(req));
+  res.status(201).json({
+    ok: true,
+    alumno: await alumnos.obtener(req.usuario, resultado.id),
+    credenciales: resultado.credenciales, // usuario y clave temporal del alumno
+  });
 }));
 
 academicoRouter.patch('/alumnos/:id', soloGestion, asyncHandler(async (req, res) => {

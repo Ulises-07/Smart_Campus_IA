@@ -15,6 +15,7 @@
     "backup": "node scripts/respaldo.js",
     "probar:esquema": "node scripts/probar-esquema.js",
     "demo": "node scripts/generar-datos-demo.js",
+    "usuarios:alumnos": "node scripts/crear-usuarios-alumnos.js",
     "migrar:identidad": "node scripts/migrar-identidad.js",
     "probar:auth": "node scripts/probar-auth.js",
     "probar:matricula": "node scripts/probar-matricula.js",

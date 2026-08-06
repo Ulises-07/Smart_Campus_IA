@@ -6,7 +6,9 @@
  * datos significa que la base ya los entregó, y basta un descuido en el
  * serializador para que se escapen.
  */
+import bcrypt from 'bcryptjs';
 import { q, transaccion } from '../config/db.js';
+import { env } from '../config/env.js';
 import { cifrar, descifrar, hashBusqueda } from '../config/crypto.js';
 import { AppError } from '../middleware/error.js';
 import { ROLES } from '../middleware/auth.js';
@@ -272,8 +274,52 @@ export async function crear(datos, ctx) {
       );
     }
 
-    return alumnoId;
+    // --- Acceso automático del alumno ---
+    // Se le crea un usuario para que pueda entrar a ver su horario, sus pagos y
+    // el asistente. El usuario es su código (ej. "2026-0264") y la contraseña
+    // es temporal; el sistema lo obliga a cambiarla en el primer ingreso.
+    const credenciales = await crearUsuarioAlumno(conn, {
+      personaId, alumnoId, codigo, anio,
+    }, ctx);
+
+    return { id: alumnoId, codigo, credenciales };
   }, ctx);
+}
+
+/**
+ * Crea el usuario de acceso de un alumno recién registrado.
+ * - Usuario: el código del alumno (único y fácil de recordar).
+ * - Contraseña temporal: "SC-" + código, que el alumno cambia al entrar.
+ * Devuelve { usuario, passwordTemporal } para mostrárselo a quien lo registró.
+ * Si por alguna razón no se puede crear (ej. rol ausente), no rompe el alta del
+ * alumno: simplemente devuelve null y el usuario se puede crear luego a mano.
+ */
+async function crearUsuarioAlumno(conn, { personaId, codigo, anio }, ctx) {
+  try {
+    const [rol] = await conn.query("SELECT id FROM rol WHERE codigo = 'ALUMNO' LIMIT 1");
+    if (!rol.length) return null;
+
+    // El nombre de usuario es el código del alumno. Si ya existiera (raro),
+    // se le añade un sufijo para no chocar.
+    let usuario = codigo;
+    const [existe] = await conn.query('SELECT id FROM usuario WHERE usuario = ?', [usuario]);
+    if (existe.length) usuario = `${codigo}-${Date.now().toString().slice(-4)}`;
+
+    // Contraseña temporal predecible pero personal. El alumno la cambia al entrar.
+    const passwordTemporal = `SC-${codigo}`;
+    const hash = await bcrypt.hash(passwordTemporal, env.BCRYPT_COST);
+
+    await conn.query(
+      `INSERT INTO usuario (persona_id, rol_id, usuario, password_hash, debe_cambiar_password, creado_por)
+       VALUES (?,?,?,?,1,?)`,
+      [personaId, rol[0].id, usuario, hash, ctx?.usuarioId ?? null]
+    );
+
+    return { usuario, passwordTemporal };
+  } catch (e) {
+    // No abortamos el registro del alumno por un fallo al crear su acceso.
+    return null;
+  }
 }
 
 export async function actualizar(alumnoId, datos, ctx) {
