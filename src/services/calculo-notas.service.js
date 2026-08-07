@@ -98,12 +98,15 @@ export async function calcular({ alumnoId, claseId, periodoId }, config = null) 
       continue;
     }
 
-    // Una evaluación sin nota cuenta como cero: el alumno no la entregó.
+    // --- SUMA DIRECTA ---
+    // La nota final es la suma de los puntos obtenidos en cada evaluación.
+    // El máximo de cada evaluación ES su peso (T1=15, T2=15, T3=15,
+    // Proyecto=25, Examen=30, que suman 100). Por eso el aporte de cada tipo
+    // es directamente los puntos obtenidos, sin regla de tres.
     const obtenido = delTipo.reduce((s, n) => s + Number(n.puntaje ?? 0), 0);
     const maximo = delTipo.reduce((s, n) => s + Number(n.puntaje_maximo), 0);
 
-    const proporcion = maximo > 0 ? obtenido / maximo : 0;
-    const aporte = proporcion * Number(pond.porcentaje);
+    const aporte = obtenido;
     notaBase += aporte;
 
     desglose.push({

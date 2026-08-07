@@ -90,7 +90,9 @@ export async function boletaCalificaciones({ alumnoId, periodoId }) {
   if (!periodo) throw new AppError('El periodo no existe.', 404, 'NO_ENCONTRADO');
 
   const notas = await q(
-    `SELECT asg.nombre AS asignatura, np.nota_final, np.aprobado,
+    `SELECT asg.nombre AS asignatura,
+            COALESCE(np.nota_final, sub.suma) AS nota_final,
+            np.aprobado,
             TRIM(CONCAT_WS(' ', pm.primer_nombre, pm.primer_apellido)) AS maestro
        FROM inscripcion i
        JOIN clase c ON c.id = i.clase_id
@@ -98,9 +100,18 @@ export async function boletaCalificaciones({ alumnoId, periodoId }) {
        LEFT JOIN usuario u ON u.id = c.maestro_id
        LEFT JOIN persona pm ON pm.id = u.persona_id
        LEFT JOIN nota_periodo np ON np.alumno_id = i.alumno_id AND np.clase_id = c.id AND np.periodo_id = ?
+       LEFT JOIN (
+         -- Nota final calculada por SUMA DIRECTA de las evaluaciones del periodo.
+         SELECT e.clase_id, n.alumno_id, ROUND(SUM(n.puntaje)) AS suma
+           FROM evaluacion e
+           JOIN nota n ON n.evaluacion_id = e.id
+           JOIN tipo_evaluacion t ON t.id = e.tipo_evaluacion_id
+          WHERE e.periodo_id = ? AND e.activa = 1 AND t.es_extra = 0
+          GROUP BY e.clase_id, n.alumno_id
+       ) sub ON sub.clase_id = c.id AND sub.alumno_id = i.alumno_id
       WHERE i.alumno_id = ? AND i.estado = 'activa'
       ORDER BY asg.nombre`,
-    [periodoId, alumnoId]
+    [periodoId, periodoId, alumnoId]
   );
 
   const colegio = await datosColegio();

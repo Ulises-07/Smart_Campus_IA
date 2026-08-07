@@ -206,11 +206,14 @@ export async function guardarNotas({ evaluacionId, notas }, ctx) {
  * evaluación y su consolidada. Es lo que el maestro revisa antes de cerrar.
  */
 export async function cuadroNotas(claseId, periodoId) {
+  // Orden fijo de columnas: primero por tipo (Tarea, Proyecto, Examen) y dentro
+  // del tipo por título, para que salga Tarea 1, Tarea 2, Tarea 3, Proyecto,
+  // Examen — y no en orden aleatorio por fecha.
   const evaluaciones = await q(
     `SELECT e.id, e.titulo, e.puntaje_maximo, e.tipo_evaluacion_id, t.nombre AS tipo, t.es_extra
        FROM evaluacion e JOIN tipo_evaluacion t ON t.id = e.tipo_evaluacion_id
       WHERE e.clase_id = ? AND e.periodo_id = ? AND e.activa = 1
-      ORDER BY t.es_extra, e.fecha, e.id`,
+      ORDER BY t.es_extra, e.tipo_evaluacion_id, e.titulo, e.id`,
     [claseId, periodoId]
   );
 
@@ -241,18 +244,38 @@ export async function cuadroNotas(claseId, periodoId) {
   const notaDe = new Map(matriz.map((m) => [`${m.alumno_id}-${m.evaluacion_id}`, m.puntaje]));
   const pond = await obtenerPonderacion(claseId, periodoId);
 
+  // Evaluaciones que cuentan para la nota final (no las de puntos extra).
+  const evalNormales = evaluaciones.filter((e) => !e.es_extra);
+  const notaMinima = (await configNotas()).minima;
+
   return {
     ponderacion: pond,
     evaluaciones,
-    alumnos: alumnos.map((a) => ({
-      alumnoId: a.alumno_id,
-      codigo: a.codigo,
-      nombre: a.nombre,
-      notaFinal: a.nota_final,
-      aprobado: a.aprobado === null ? null : !!a.aprobado,
-      bloqueada: !!a.bloqueada,
-      notas: Object.fromEntries(evaluaciones.map((e) => [e.id, notaDe.get(`${a.alumno_id}-${e.id}`) ?? null])),
-    })),
+    alumnos: alumnos.map((a) => {
+      const notas = Object.fromEntries(evaluaciones.map((e) => [e.id, notaDe.get(`${a.alumno_id}-${e.id}`) ?? null]));
+
+      // Nota final = SUMA DIRECTA de los puntos obtenidos en cada evaluación.
+      // Se calcula al vuelo para que aparezca siempre, aunque no se haya
+      // consolidado. Una evaluación sin nota cuenta como 0.
+      let suma = 0;
+      let algunaNota = false;
+      for (const e of evalNormales) {
+        const v = notas[e.id];
+        if (v !== null && v !== undefined) { suma += Number(v); algunaNota = true; }
+      }
+      const notaFinalCalculada = algunaNota ? Math.round(suma) : null;
+
+      return {
+        alumnoId: a.alumno_id,
+        codigo: a.codigo,
+        nombre: a.nombre,
+        // Si hay nota consolidada guardada, se respeta; si no, la calculada.
+        notaFinal: a.nota_final !== null && a.nota_final !== undefined ? a.nota_final : notaFinalCalculada,
+        aprobado: notaFinalCalculada === null ? null : notaFinalCalculada >= notaMinima,
+        bloqueada: !!a.bloqueada,
+        notas,
+      };
+    }),
   };
 }
 
@@ -328,16 +351,24 @@ export async function notasDeAlumno(alumnoId, { periodoId, anioLectivoId }) {
     return q(
       `SELECT c.id AS clase_id, asg.nombre AS asignatura,
               TRIM(CONCAT_WS(' ', pm.primer_nombre, pm.primer_apellido)) AS maestro,
-              np.nota_final, np.aprobado, np.bloqueada, np.detalle_calculo
+              COALESCE(np.nota_final, sub.suma) AS nota_final, np.aprobado, np.bloqueada, np.detalle_calculo
          FROM inscripcion i
          JOIN clase c ON c.id = i.clase_id
          JOIN asignatura asg ON asg.id = c.asignatura_id
          LEFT JOIN usuario u ON u.id = c.maestro_id
          LEFT JOIN persona pm ON pm.id = u.persona_id
          LEFT JOIN nota_periodo np ON np.alumno_id = i.alumno_id AND np.clase_id = c.id AND np.periodo_id = ?
+         LEFT JOIN (
+           SELECT e.clase_id, n.alumno_id, ROUND(SUM(n.puntaje)) AS suma
+             FROM evaluacion e
+             JOIN nota n ON n.evaluacion_id = e.id
+             JOIN tipo_evaluacion t ON t.id = e.tipo_evaluacion_id
+            WHERE e.periodo_id = ? AND e.activa = 1 AND t.es_extra = 0
+            GROUP BY e.clase_id, n.alumno_id
+         ) sub ON sub.clase_id = c.id AND sub.alumno_id = i.alumno_id
         WHERE i.alumno_id = ? AND i.estado = 'activa'
         ORDER BY asg.nombre`,
-      [periodoId, alumnoId]
+      [periodoId, periodoId, alumnoId]
     );
   }
 

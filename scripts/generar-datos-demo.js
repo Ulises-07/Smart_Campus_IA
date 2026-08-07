@@ -195,11 +195,12 @@ async function main() {
       }
     }
 
-    // --- Ponderación: 30 / 30 / 40 ---
-    console.log('Definiendo ponderaciones (Tareas 30, Proyectos 30, Examenes 40)...');
+    // --- Ponderación por tipo (suma directa): Tareas 45, Proyectos 25, Examenes 30 ---
+    // Las 3 tareas (15 c/u) suman 45; el proyecto 25; el examen 30. Total 100.
+    console.log('Definiendo ponderaciones (Tareas 45, Proyectos 25, Examenes 30)...');
     for (const cl of clases) {
       for (const p of periodos) {
-        for (const [tipo, pct] of [[1, 30], [2, 30], [3, 40]]) {
+        for (const [tipo, pct] of [[1, 45], [2, 25], [3, 30]]) {
           await q('INSERT INTO ponderacion (clase_id, periodo_id, tipo_evaluacion_id, porcentaje) VALUES (?,?,?,?)',
             [cl.id, p.id, tipo, pct]);
         }
@@ -259,10 +260,15 @@ async function main() {
 
     let notasCreadas = 0;
     for (const cl of clases) {
-      const evaluaciones = [];
-      for (let i = 1; i <= 3; i++) evaluaciones.push({ tipo: 1, titulo: `Tarea ${i}`, max: 20 });
-      evaluaciones.push({ tipo: 2, titulo: 'Proyecto del parcial', max: 100 });
-      evaluaciones.push({ tipo: 3, titulo: 'Examen del I Parcial', max: 100 });
+      // 5 evaluaciones fijas por clase, en orden, con su puntaje máximo = su peso.
+      // Tarea 1/2/3 = 15 c/u, Proyecto = 25, Examen = 30. Suman 100.
+      const evaluaciones = [
+        { tipo: 1, titulo: 'Tarea 1', max: 15 },
+        { tipo: 1, titulo: 'Tarea 2', max: 15 },
+        { tipo: 1, titulo: 'Tarea 3', max: 15 },
+        { tipo: 2, titulo: 'Proyecto del parcial', max: 25 },
+        { tipo: 3, titulo: 'Examen del I Parcial', max: 30 },
+      ];
 
       const inscritos = alumnos.filter((a) => a.seccion === cl.seccion.id);
 
@@ -279,7 +285,8 @@ async function main() {
           // riesgo académico no tendrían nada que detectar.
           if (Math.random() < 0.04) continue;
           const pct = normal(a.aptitud, 9, 30, 100) / 100;
-          const puntaje = Math.min(ev.max, Math.round(pct * ev.max * 100) / 100);
+          // Puntaje ENTERO (redondeado), nunca mayor al máximo.
+          const puntaje = Math.min(ev.max, Math.round(pct * ev.max));
           await q('INSERT INTO nota (evaluacion_id, alumno_id, puntaje) VALUES (?,?,?)',
             [re.insertId, a.id, puntaje]);
           notasCreadas++;
