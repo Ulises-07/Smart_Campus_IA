@@ -50,6 +50,7 @@ export const ICONO_SECCION = {
   '/alumnos.html': 'alumnos',
   '/horarios.html': 'horarios',
   '/finanzas.html': 'finanzas',
+  '/usuarios.html': 'alumnos',
   '/auditoria.html': 'auditoria',
   '/video.html': 'video',
 };

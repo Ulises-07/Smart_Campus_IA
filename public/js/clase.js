@@ -7,6 +7,17 @@ let usuario, periodos = [], periodoId, tabActiva = 'notas';
 
 const puedeEditar = () => ['ADMIN', 'MAESTRO'].includes(usuario.rol);
 
+// Devuelve el alumnoId del usuario logueado. Usa el del perfil; si no está
+// (por alguna razón), lo obtiene del listado, que ya viene filtrado a él mismo.
+let _alumnoIdCache = null;
+async function miAlumnoId() {
+  if (usuario.alumnoId) return usuario.alumnoId;
+  if (_alumnoIdCache) return _alumnoIdCache;
+  const lista = await api('/api/alumnos?porPagina=1').catch(() => null);
+  _alumnoIdCache = lista?.datos?.[0]?.id ?? null;
+  return _alumnoIdCache;
+}
+
 async function cargarPeriodos() {
   const { anioLectivo } = await api('/api/contexto');
   // Los periodos vienen de la BD; se piden vía un endpoint ligero.
@@ -515,10 +526,11 @@ async function cargarMisNotas() {
   const panel = $('panel-notas');
   panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
   try {
-    const r = await api(`/api/alumnos/${usuario.alumnoId}/notas?periodoId=${periodoId}`);
+    const aid = await miAlumnoId();
+    const r = await api(`/api/alumnos/${aid}/notas?periodoId=${periodoId}`);
     // La respuesta trae una fila por clase; nos quedamos con la de ESTA clase.
     const fila = (r.notas || []).find((n) => n.clase_id === claseId);
-    const boleta = `<a class="boton-mini" href="/api/alumnos/${usuario.alumnoId}/boleta?periodoId=${periodoId}" target="_blank">Descargar mi boleta</a>`;
+    const boleta = `<a class="boton-mini" href="/api/alumnos/${aid}/boleta?periodoId=${periodoId}" target="_blank">Descargar mi boleta</a>`;
 
     if (!fila || fila.nota_final === null || fila.nota_final === undefined) {
       panel.innerHTML = `
@@ -546,7 +558,8 @@ async function cargarMiAsistencia() {
   const panel = $('panel-asistencia');
   panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
   try {
-    const r = await api(`/api/alumnos/${usuario.alumnoId}/asistencia`);
+    const aid = await miAlumnoId();
+    const r = await api(`/api/alumnos/${aid}/asistencia`);
     const resumen = r.resumen || [];
     // Buscar el resumen de ESTA clase.
     const c = resumen.find((x) => x.claseId === claseId);
@@ -581,7 +594,8 @@ async function cargarMiComportamiento() {
   const panel = $('panel-comportamiento');
   panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
   try {
-    const r = await api(`/api/comportamiento/alumno/${usuario.alumnoId}`);
+    const aid = await miAlumnoId();
+    const r = await api(`/api/comportamiento/alumno/${aid}`);
     const puntaje = r.puntaje ?? 100;
     const color = puntaje >= 80 ? 'var(--color-aprobado)' : puntaje >= 60 ? 'var(--color-advertencia)' : 'var(--color-reprobado)';
     const registros = r.registros || [];

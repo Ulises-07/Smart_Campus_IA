@@ -58,6 +58,7 @@ export async function iniciarPantalla(tituloPagina) {
     { href: '/alumnos.html', texto: 'Alumnos', roles: ['ADMIN', 'ASESOR', 'MAESTRO'] },
     { href: '/horarios.html', texto: 'Horarios', roles: ['ADMIN', 'MAESTRO', 'ALUMNO', 'ASESOR'] },
     { href: '/finanzas.html', texto: 'Finanzas', roles: ['ADMIN', 'ASESOR', 'ALUMNO'] },
+    { href: '/usuarios.html', texto: 'Usuarios', roles: ['ADMIN'] },
     { href: '/auditoria.html', texto: 'Auditoría', roles: ['ADMIN'] },
     { href: '/video.html', texto: 'Videovigilancia', roles: ['ADMIN'] },
   ].filter((m) => m.roles.includes(usuario.rol));

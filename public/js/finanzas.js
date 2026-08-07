@@ -204,22 +204,25 @@ function cambiarTab(tab) {
 (async () => {
   usuario = await iniciarPantalla('Finanzas');
 
-  // Un alumno solo ve su propia cuenta: no hay buscador para él.
+  // Un alumno solo ve su propia cuenta: no hay buscador ni pestañas para él.
   if (usuario.rol === 'ALUMNO') {
     // Ocultar la pestaña de morosidad y el buscador, con guardas por si no existen.
     const tabMoro = document.querySelector('[data-tab="morosidad"]');
-    if (tabMoro) tabMoro.hidden = true;
+    if (tabMoro) tabMoro.style.display = 'none';
     const buscador = $('panel-cuenta')?.querySelector('.tarjeta');
-    if (buscador) buscador.hidden = true;
+    if (buscador) buscador.style.display = 'none';
+    // Asegurar que el panel de cuenta esté visible (es lo único que verá).
+    if ($('panel-cuenta')) $('panel-cuenta').hidden = false;
+    if ($('panel-morosidad')) $('panel-morosidad').hidden = true;
 
-    // Usa su propio alumnoId del perfil (lo trae /api/auth/yo). Si por alguna
-    // razón no está, cae al listado que ya viene filtrado a solo él mismo.
+    // Busca su propia cuenta. Usa el alumnoId del perfil; si no está, lo obtiene
+    // del listado (que ya viene filtrado a solo él mismo por seguridad de fila).
     try {
       let alumnoId = usuario.alumnoId;
       let nombre = usuario.persona?.nombreCompleto || 'Mi cuenta';
       if (!alumnoId) {
         const lista = await api('/api/alumnos?porPagina=1');
-        if (lista.datos && lista.datos[0]) {
+        if (lista.datos && lista.datos.length) {
           alumnoId = lista.datos[0].id;
           nombre = lista.datos[0].nombreCompleto;
         }
@@ -227,7 +230,7 @@ function cambiarTab(tab) {
       if (alumnoId) {
         await verCuenta(alumnoId, nombre);
       } else {
-        $('cuenta').innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">No se encontró tu matrícula. Consulta con administración.</p></div>';
+        $('cuenta').innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">No se encontró tu matrícula activa. Consulta con administración.</p></div>';
       }
     } catch (e) {
       $('cuenta').innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;

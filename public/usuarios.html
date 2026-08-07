@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usuarios — Smart Campus IA</title>
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenido">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <h1 style="margin:0;font-size:var(--texto-2xl);color:var(--color-primary)">Usuarios del personal</h1>
+      <button class="boton" id="btn-nuevo" style="width:auto">Nuevo usuario</button>
+    </div>
+
+    <div class="tarjeta" style="margin-bottom:1rem;padding:1rem">
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:end">
+        <div class="campo" style="margin:0;flex:1;min-width:200px">
+          <label for="q">Buscar</label>
+          <input id="q" placeholder="Usuario, nombre o apellido">
+        </div>
+        <div class="campo" style="margin:0;min-width:160px">
+          <label for="f-rol">Rol</label>
+          <select id="f-rol" class="control">
+            <option value="">Todos</option>
+            <option value="ADMIN">Administrador</option>
+            <option value="MAESTRO">Maestro</option>
+            <option value="ASESOR">Asesor</option>
+            <option value="ALUMNO">Alumno</option>
+          </select>
+        </div>
+        <button class="boton" id="btn-buscar" style="width:auto">Buscar</button>
+      </div>
+    </div>
+
+    <div class="tarjeta" style="padding:0;overflow:auto">
+      <table class="tabla" id="tabla">
+        <thead>
+          <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <dialog class="dialogo" id="dlg"></dialog>
+
+  <script type="module" src="/js/usuarios.js"></script>
+</body>
+</html>

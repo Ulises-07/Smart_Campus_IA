@@ -157,9 +157,9 @@ async function asignar(dia, bloqueId) {
     $('f-vista').value = 'seccion';
     llenarValores();
     if (usuario.seccionId) $('f-valor').value = usuario.seccionId;
-    // Ocultar los selectores: no hay nada que elegir.
-    const filtros = $('f-vista').closest('div');
-    if (filtros) filtros.style.display = 'none';
+    // Ocultar la tarjeta completa de filtros: no hay nada que elegir.
+    const tarjetaFiltros = $('f-vista').closest('.tarjeta');
+    if (tarjetaFiltros) tarjetaFiltros.style.display = 'none';
   } else {
     llenarValores();
   }
