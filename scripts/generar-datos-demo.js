@@ -23,10 +23,10 @@ const AUTO = process.argv.includes('--si');
 const PASSWORD_DEMO = 'Demo.2026.Cambiar';
 
 // --- Nombres para que los reportes se vean como un colegio de verdad ---
-const NOMBRES_M = ['Carlos', 'Jose', 'Luis', 'Marco', 'Kevin', 'Denis', 'Oscar', 'Elvin', 'Josue', 'Cristian', 'Alexander', 'Darwin', 'Nahum', 'Byron', 'Wilmer'];
-const NOMBRES_F = ['Maria', 'Ana', 'Gabriela', 'Keyla', 'Wendy', 'Dulce', 'Karla', 'Suyapa', 'Jessica', 'Nohemi', 'Fernanda', 'Yensi', 'Heidy', 'Astrid', 'Marlen'];
+const NOMBRES_M = ['Carlos', 'José', 'Luis', 'Marco', 'Kevin', 'Denis', 'Óscar', 'Elvin', 'Josué', 'Cristian', 'Alexander', 'Darwin', 'Nahúm', 'Byron', 'Wilmer'];
+const NOMBRES_F = ['María', 'Ana', 'Gabriela', 'Keyla', 'Wendy', 'Dulce', 'Karla', 'Suyapa', 'Jessica', 'Nohemí', 'Fernanda', 'Yensi', 'Heidy', 'Astrid', 'Marlen'];
 const SEGUNDOS = ['Alberto', 'Antonio', 'Isabel', 'Nicole', 'David', 'Esteban', 'Raquel', 'Milagro', 'Andrea', 'Fernando', ''];
-const APELLIDOS = ['Lopez', 'Martinez', 'Rodriguez', 'Hernandez', 'Garcia', 'Flores', 'Reyes', 'Cruz', 'Sanchez', 'Mejia', 'Zelaya', 'Bonilla', 'Nunez', 'Padilla', 'Caceres', 'Aguilar', 'Ordonez', 'Interiano', 'Banegas', 'Discua', 'Fajardo', 'Andino'];
+const APELLIDOS = ['López', 'Martínez', 'Rodríguez', 'Hernández', 'García', 'Flores', 'Reyes', 'Cruz', 'Sánchez', 'Mejía', 'Zelaya', 'Bonilla', 'Núñez', 'Padilla', 'Cáceres', 'Aguilar', 'Ordóñez', 'Interiano', 'Banegas', 'Discua', 'Fajardo', 'Andino'];
 
 const al = (a) => a[Math.floor(Math.random() * a.length)];
 const ent = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -327,12 +327,12 @@ async function main() {
     // --- Incidencias ---
     console.log('Generando incidencias de comportamiento...');
     const descripciones = [
-      'Uso del telefono celular durante la clase',
-      'Llegada tarde reiterada sin justificacion',
-      'Falta de respeto a un companero',
+      'Uso del teléfono celular durante la clase',
+      'Llegada tarde reiterada sin justificación',
+      'Falta de respeto a un compañero',
       'No porta el uniforme completo',
       'Interrumpe el desarrollo de la clase',
-      'Se ausento del aula sin permiso',
+      'Se ausentó del aula sin permiso',
     ];
     let incidencias = 0;
     for (const a of alumnos) {

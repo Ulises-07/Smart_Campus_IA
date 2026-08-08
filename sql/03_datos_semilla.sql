@@ -24,7 +24,7 @@ SET @app_ip = '127.0.0.1';
 
 INSERT INTO config_sistema (clave, valor, tipo, descripcion, editable) VALUES
   ('institucion.nombre',        'Instituto Smart Campus',  'texto',    'Nombre oficial del centro educativo', 1),
-  ('institucion.codigo',        'SC-0001',                 'texto',    'Codigo del centro ante la Secretaria de Educacion', 1),
+  ('institucion.codigo',        'SC-0001',                 'texto',    'Código del centro ante la Secretaría de Educación', 1),
   ('institucion.zona_horaria',  'America/Tegucigalpa',     'texto',    'Zona horaria para la interfaz', 0),
 
   -- --- Reglas de calificación ---
@@ -84,20 +84,20 @@ INSERT INTO periodo (anio_lectivo_id, numero, nombre, fecha_inicio, fecha_fin, e
 -- ============================================================================
 
 INSERT INTO carrera (id, codigo, nombre) VALUES
-  (1, 'BTP-COMP',  'BTP en Computacion'),
-  (2, 'BTP-ADMIN', 'BTP en Administracion de Empresas');
+  (1, 'BTP-COMP',  'BTP en Computación'),
+  (2, 'BTP-ADMIN', 'BTP en Administración de Empresas');
 
 -- Ciclo Común: sin carrera. BTP: un grado por carrera.
 INSERT INTO grado (numero, nombre, nivel, carrera_id) VALUES
-  (7,  'Septimo Grado',  'CICLO_COMUN', NULL),
+  (7,  'Séptimo Grado',  'CICLO_COMUN', NULL),
   (8,  'Octavo Grado',   'CICLO_COMUN', NULL),
   (9,  'Noveno Grado',   'CICLO_COMUN', NULL),
-  (10, 'Decimo Grado — BTP Computacion',  'BTP', 1),
-  (11, 'Undecimo Grado — BTP Computacion', 'BTP', 1),
-  (12, 'Duodecimo Grado — BTP Computacion','BTP', 1),
-  (10, 'Decimo Grado — BTP Administracion','BTP', 2),
-  (11, 'Undecimo Grado — BTP Administracion','BTP', 2),
-  (12, 'Duodecimo Grado — BTP Administracion','BTP', 2);
+  (10, 'Décimo Grado — BTP Computación',  'BTP', 1),
+  (11, 'Undécimo Grado — BTP Computación', 'BTP', 1),
+  (12, 'Duodecimo Grado — BTP Computación','BTP', 1),
+  (10, 'Décimo Grado — BTP Administración','BTP', 2),
+  (11, 'Undécimo Grado — BTP Administración','BTP', 2),
+  (12, 'Duodecimo Grado — BTP Administración','BTP', 2);
 
 
 INSERT INTO aula (codigo, nombre, capacidad, tipo) VALUES
@@ -111,7 +111,7 @@ INSERT INTO aula (codigo, nombre, capacidad, tipo) VALUES
   ('A-204', 'Aula 204', 35, 'aula'),
   ('LAB-1', 'Laboratorio de Computo 1', 30, 'laboratorio'),
   ('LAB-2', 'Laboratorio de Computo 2', 30, 'laboratorio'),
-  ('TAL-1', 'Taller de Administracion',  30, 'taller');
+  ('TAL-1', 'Taller de Administración',  30, 'taller');
 
 
 -- Jornada matutina típica de un colegio hondureño.
@@ -132,25 +132,25 @@ INSERT INTO bloque_horario (orden, nombre, hora_inicio, hora_fin, es_receso) VAL
 
 INSERT INTO asignatura (codigo, nombre, descripcion) VALUES
   -- Tronco común
-  ('MAT',  'Matematicas',              'Area de matematicas'),
-  ('ESP',  'Espanol',                  'Lengua y literatura'),
-  ('CN',   'Ciencias Naturales',       'Biologia, quimica y fisica basica'),
+  ('MAT',  'Matemáticas',              'Area de matemáticas'),
+  ('ESP',  'Español',                  'Lengua y literatura'),
+  ('CN',   'Ciencias Naturales',       'Biología, química y física basica'),
   ('CS',   'Ciencias Sociales',        'Historia, geografia y civica'),
-  ('ING',  'Ingles',                   'Idioma extranjero'),
-  ('EF',   'Educacion Fisica',         'Deporte y salud'),
-  ('ART',  'Educacion Artistica',      'Expresion artistica'),
-  ('TEC',  'Tecnologia',               'Informatica basica'),
+  ('ING',  'Inglés',                   'Idioma extranjero'),
+  ('EF',   'Educación Física',         'Deporte y salud'),
+  ('ART',  'Educación Artística',      'Expresion artistica'),
+  ('TEC',  'Tecnología',               'Informática básica'),
   -- BTP Computación
-  ('PRG1', 'Programacion I',           'Fundamentos de programacion'),
-  ('PRG2', 'Programacion II',          'Programacion orientada a objetos'),
+  ('PRG1', 'Programación I',           'Fundamentos de programación'),
+  ('PRG2', 'Programación II',          'Programación orientada a objetos'),
   ('BDD',  'Base de Datos',            'Modelado y SQL'),
   ('REDES','Redes de Computadoras',    'Fundamentos de redes'),
-  ('SOP',  'Sistemas Operativos',      'Administracion de sistemas'),
+  ('SOP',  'Sistemas Operativos',      'Administración de sistemas'),
   ('DSW',  'Desarrollo Web',           'HTML, CSS y JavaScript'),
   -- BTP Administración
   ('CONT1','Contabilidad I',           'Contabilidad general'),
   ('CONT2','Contabilidad II',          'Contabilidad de costos'),
-  ('ADM',  'Administracion',           'Teoria administrativa'),
+  ('ADM',  'Administración',           'Teoria administrativa'),
   ('MERC', 'Mercadotecnia',            'Fundamentos de mercadeo'),
   ('ECO',  'Economia',                 'Microeconomia y macroeconomia'),
   ('EMP',  'Emprendimiento',           'Formulacion de proyectos');
