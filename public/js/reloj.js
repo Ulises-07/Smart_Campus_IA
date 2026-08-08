@@ -46,7 +46,7 @@ export function montarReloj(idContenedor) {
   cont.classList.add('reloj-flip');
   cont.innerHTML = `
     <div class="reloj-seccion">
-      <span class="reloj-rotulo">Día</span>
+      <span class="reloj-rotulo">Fecha</span>
       <div class="reloj-fila" id="reloj-dia"></div>
     </div>
     <div class="reloj-div"></div>
@@ -55,10 +55,11 @@ export function montarReloj(idContenedor) {
       <div class="reloj-fila" id="reloj-hora"></div>
     </div>`;
 
-  // Cartas del día: nombre + número.
+  // Cartas de la fecha: nombre del día + número + mes.
   const filaDia = cont.querySelector('#reloj-dia');
   const setNombreDia = crearCarta(filaDia, 'ancha');
   const setNumDia = crearCarta(filaDia, 'media');
+  const setMes = crearCarta(filaDia, 'ancha');
 
   // Cartas de la hora: HH : MM : SS.
   const filaHora = cont.querySelector('#reloj-hora');
@@ -70,10 +71,16 @@ export function montarReloj(idContenedor) {
 
   const dosDig = (n) => String(n).padStart(2, '0');
 
+  // Fecha de la demo: el sistema simula que estamos al cierre del I Parcial,
+  // el 10 de abril de 2026. La HORA sí avanza en tiempo real.
+  const FECHA_DEMO = new Date(2026, 3, 10); // mes 3 = abril
+
   function tick() {
     const ahora = new Date();
-    setNombreDia(DIAS[ahora.getDay()]);
-    setNumDia(dosDig(ahora.getDate()));
+    // Día y mes se toman de la fecha fija de la demo; la hora, del reloj real.
+    setNombreDia(DIAS[FECHA_DEMO.getDay()]);
+    setNumDia(dosDig(FECHA_DEMO.getDate()));
+    setMes(MESES[FECHA_DEMO.getMonth()]);
     setH(dosDig(ahora.getHours()));
     setM(dosDig(ahora.getMinutes()));
     setS(dosDig(ahora.getSeconds()));

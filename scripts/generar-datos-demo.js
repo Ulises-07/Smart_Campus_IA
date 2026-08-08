@@ -295,16 +295,19 @@ async function main() {
     }
 
     // --- Asistencia: 6 semanas ---
-    console.log('Generando asistencia de 6 semanas...');
+    console.log('Generando asistencia del I Parcial (2 feb – 10 abr)...');
     let asistencias = 0;
-    const inicio = new Date(`${anio.anio}-02-02T00:00:00Z`);
-    for (const cl of clases.slice(0, Math.min(clases.length, 60))) {
+    // Asistencia de todo el I Parcial: del 2 de febrero al 10 de abril, solo
+    // días de semana. Para todas las clases (no una muestra), así cada clase
+    // tiene su registro completo del parcial.
+    const inicioAsist = new Date(`${anio.anio}-02-02T00:00:00Z`);
+    const finAsist = new Date(`${anio.anio}-04-10T00:00:00Z`);
+    for (const cl of clases) {
       const inscritos = alumnos.filter((a) => a.seccion === cl.seccion.id);
-      for (let d = 0; d < 30; d++) {
-        const fecha = new Date(inicio);
-        fecha.setUTCDate(fecha.getUTCDate() + d);
+      const fecha = new Date(inicioAsist);
+      while (fecha <= finAsist) {
         const dow = fecha.getUTCDay();
-        if (dow === 0 || dow === 6) continue;
+        if (dow === 0 || dow === 6) { fecha.setUTCDate(fecha.getUTCDate() + 1); continue; }
         const iso = fecha.toISOString().slice(0, 10);
 
         for (const a of inscritos) {
@@ -321,6 +324,7 @@ async function main() {
             [cl.id, a.id, iso, estado]);
           asistencias++;
         }
+        fecha.setUTCDate(fecha.getUTCDate() + 1);
       }
     }
 
