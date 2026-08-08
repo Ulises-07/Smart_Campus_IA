@@ -86,7 +86,10 @@ export async function estadoCuenta(alumnoId, anioLectivoId) {
 }
 
 /** Genera los cargos del año para un alumno: matrícula + mensualidades. */
-export async function generarCargos({ alumnoId, anioLectivoId, meses = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] }, ctx) {
+// Por defecto genera los cargos del I Parcial (febrero, marzo, abril). El
+// sistema simula que vamos por ese parcial; se pueden pasar otros meses si se
+// necesita generar más adelante conforme avance el año.
+export async function generarCargos({ alumnoId, anioLectivoId, meses = [2, 3, 4] }, ctx) {
   const conceptos = await q(
     "SELECT id, tipo, monto_default FROM concepto_pago WHERE codigo IN ('MATRICULA','MENSUALIDAD') AND activo = 1"
   );

@@ -374,8 +374,10 @@ async function main() {
         pagos++;
       }
 
-      // Mensualidades de febrero a julio
-      for (let mes = 2; mes <= 7; mes++) {
+      // Mensualidades solo del I Parcial: febrero (2), marzo (3) y abril (4).
+      // El sistema simula que vamos por el I Parcial, así que no tiene sentido
+      // registrar cargos de meses que "todavía no han llegado".
+      for (let mes = 2; mes <= 4; mes++) {
         const rc = await q(
           `INSERT INTO cargo (alumno_id, anio_lectivo_id, concepto_id, mes, monto, fecha_vencimiento, estado)
            VALUES (?,?,2,?,900.00,?, 'pendiente')`,
