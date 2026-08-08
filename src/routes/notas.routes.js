@@ -174,6 +174,10 @@ notasRouter.get('/clases/:claseId/asistencia', claseDelMaestro, asyncHandler(asy
   res.json({ ok: true, ...(await asistencia.planilla(Number(req.params.claseId), fecha)) });
 }));
 
+notasRouter.get('/clases/:claseId/asistencia/fechas', claseDelMaestro, asyncHandler(async (req, res) => {
+  res.json({ ok: true, fechas: await asistencia.fechasConAsistencia(Number(req.params.claseId)) });
+}));
+
 notasRouter.put('/clases/:claseId/asistencia', claseDelMaestro, requiereRol(ROLES.ADMIN, ROLES.MAESTRO), asyncHandler(async (req, res) => {
   const datos = validar(z.object({
     fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

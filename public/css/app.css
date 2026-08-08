@@ -628,40 +628,78 @@ h2, h3 { color: var(--color-text); }
 
 @media (max-width: 560px) { .ficha-stats { grid-template-columns: 1fr; } }
 
-/* Tablita de promedios por parcial (ficha del alumno y tablero del alumno) */
-.tabla-parciales {
-  margin-top: 1.25rem;
-  padding: 1rem;
-  border-radius: 12px;
-  background: var(--color-surface-alt, #f0f3f8);
-  border: 1px solid var(--color-border, #d8dee9);
-}
-.tabla-parciales-titulo {
-  font-size: var(--texto-xs);
-  text-transform: uppercase;
-  letter-spacing: .06em;
+/* ===== Asistencia: cuadrícula de fechas por mes ===== */
+.asist-leyenda {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: var(--texto-sm);
   color: var(--color-text-muted);
-  font-weight: 700;
-  margin-bottom: .6rem;
-  text-align: center;
 }
-.tabla.mini-parciales {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.tabla.mini-parciales thead th {
-  background: var(--color-primary);
-  color: #fff;
-  font-size: var(--texto-xs);
-  padding: .5rem .25rem;
-  border: none;
-}
-.tabla.mini-parciales thead th:first-child { border-top-left-radius: 8px; }
-.tabla.mini-parciales thead th:last-child { border-top-right-radius: 8px; }
-.tabla.mini-parciales tbody td {
-  padding: .7rem .25rem;
-  font-size: var(--texto-lg);
+.asist-leyenda .pt {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border-radius: 4px;
   background: var(--color-surface, #fff);
-  border-bottom: 1px solid var(--color-border, #e6ebf2);
+  border: 1px solid var(--color-border, #d8dee9);
+  vertical-align: middle;
+  margin-right: .35rem;
 }
+.asist-leyenda .pt.con-registro {
+  background: var(--color-aprobado, #1b7f4d);
+  border-color: var(--color-aprobado, #1b7f4d);
+}
+.asist-ayuda { margin-left: auto; font-style: italic; }
+
+.asist-mes { margin-bottom: 1.5rem; }
+.asist-mes-titulo {
+  font-size: var(--texto-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: .6rem;
+}
+.asist-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: .4rem;
+}
+.dia-asist {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem 0;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d8dee9);
+  background: var(--color-surface, #fff);
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .15s ease;
+  min-height: 46px;
+}
+.dia-asist:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  border-color: var(--color-primary);
+}
+.dia-asist .dia-num {
+  font-size: var(--texto-base);
+  font-weight: 700;
+  color: var(--color-text, #1a1a1a);
+}
+.dia-asist .dia-letra {
+  font-size: .65rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+/* Día con asistencia ya registrada: verde */
+.dia-asist.con-registro {
+  background: var(--color-aprobado, #1b7f4d);
+  border-color: var(--color-aprobado, #1b7f4d);
+}
+.dia-asist.con-registro .dia-num,
+.dia-asist.con-registro .dia-letra { color: #fff; }
+/* Fin de semana: más tenue */
+.dia-asist.finde { opacity: .55; }
+.dia-asist.finde.con-registro { opacity: 1; }

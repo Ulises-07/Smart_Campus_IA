@@ -228,57 +228,158 @@ async function editarPonderacion() {
 }
 
 // ---------- ASISTENCIA ----------
+// ---------- ASISTENCIA: cuadrícula de fechas del año ----------
+const MESES_ASIST = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const DIAS_CORTOS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+// Rango del año escolar: 1 de febrero a 30 de noviembre de 2026.
+const ASIST_INICIO = '2026-02-01';
+const ASIST_FIN = '2026-11-30';
+
 async function cargarAsistencia() {
   const panel = $('panel-asistencia');
   panel.innerHTML = '<div class="tarjeta"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
-  const hoy = new Date().toISOString().slice(0, 10);
 
   try {
-    const { alumnos, yaTomada } = await api(`/api/clases/${claseId}/asistencia?fecha=${hoy}`);
-    const estados = ['presente', 'ausente', 'tarde', 'justificado'];
+    // Fechas que ya tienen asistencia registrada (para marcarlas).
+    const { fechas } = await api(`/api/clases/${claseId}/asistencia/fechas`);
+    const conRegistro = new Map(fechas.map((f) => [f.fecha, f]));
+
+    // Construir los meses del rango (feb a nov 2026).
+    const meses = [];
+    let d = new Date(ASIST_INICIO + 'T12:00:00');
+    const fin = new Date(ASIST_FIN + 'T12:00:00');
+    let mesActual = -1, contenedor = null;
+    while (d <= fin) {
+      const m = d.getMonth();
+      if (m !== mesActual) {
+        mesActual = m;
+        contenedor = { mes: m, anio: d.getFullYear(), dias: [] };
+        meses.push(contenedor);
+      }
+      const iso = d.toISOString().slice(0, 10);
+      contenedor.dias.push({
+        iso,
+        dia: d.getDate(),
+        diaSemana: d.getDay(),
+        registro: conRegistro.get(iso) ?? null,
+      });
+      d.setDate(d.getDate() + 1);
+    }
+
+    const celdaDia = (dd) => {
+      const tieneReg = !!dd.registro;
+      const finde = dd.diaSemana === 0 || dd.diaSemana === 6;
+      const clases = ['dia-asist'];
+      if (tieneReg) clases.push('con-registro');
+      if (finde) clases.push('finde');
+      const titulo = tieneReg
+        ? `${dd.registro.presentes}P · ${dd.registro.ausentes}A · ${dd.registro.tardes}T · ${dd.registro.justificados}J`
+        : 'Sin registro';
+      return `<button type="button" class="${clases.join(' ')}" data-fecha="${dd.iso}" title="${titulo}">
+        <span class="dia-num">${dd.dia}</span>
+        <span class="dia-letra">${DIAS_CORTOS[dd.diaSemana]}</span>
+      </button>`;
+    };
 
     panel.innerHTML = `
-      <div class="tarjeta" style="margin-bottom:1rem;padding:1rem;display:flex;gap:1rem;align-items:end">
-        <div class="campo" style="margin:0"><label>Fecha</label><input id="a-fecha" class="control" type="date" value="${hoy}"></div>
-        ${yaTomada ? '<span class="insignia-estado estado-activo">Ya se pasó lista hoy — puedes corregir</span>' : ''}
+      <div class="asist-leyenda">
+        <span><i class="pt con-registro"></i> Con asistencia registrada</span>
+        <span><i class="pt"></i> Sin registro</span>
+        <span class="asist-ayuda">Toca una fecha para ver o registrar la asistencia</span>
       </div>
-      <div class="tarjeta" style="padding:0;overflow:auto">
-        <table class="tabla">
-          <thead><tr><th>Alumno</th>${estados.map((e) => `<th style="text-align:center;text-transform:capitalize">${e}</th>`).join('')}</tr></thead>
-          <tbody>${alumnos.map((a) => `
-            <tr>
-              <td>${escapar(a.nombre)}</td>
-              ${estados.map((e) => `<td style="text-align:center"><input type="radio" name="al-${a.alumno_id}" value="${e}" ${a.estado === e || (!a.estado && e === 'presente') ? 'checked' : ''}></td>`).join('')}
-            </tr>`).join('')}</tbody>
-        </table>
-      </div>
-      ${puedeEditar() ? '<button class="boton" id="a-guardar" style="width:auto;margin-top:1rem">Guardar asistencia</button>' : ''}`;
+      ${meses.map((mes) => `
+        <div class="asist-mes">
+          <div class="asist-mes-titulo">${MESES_ASIST[mes.mes]} ${mes.anio}</div>
+          <div class="asist-rejilla">
+            ${mes.dias.map(celdaDia).join('')}
+          </div>
+        </div>`).join('')}`;
 
-    $('a-fecha')?.addEventListener('change', async (e) => {
-      const f = e.target.value;
-      const datos = await api(`/api/clases/${claseId}/asistencia?fecha=${f}`);
-      for (const a of datos.alumnos) {
-        const radio = panel.querySelector(`input[name="al-${a.alumno_id}"][value="${a.estado ?? 'presente'}"]`);
-        if (radio) radio.checked = true;
-      }
-    });
-
-    $('a-guardar')?.addEventListener('click', async () => {
-      const fecha = $('a-fecha').value;
-      const registros = alumnos.map((a) => ({
-        alumnoId: a.alumno_id,
-        estado: panel.querySelector(`input[name="al-${a.alumno_id}"]:checked`)?.value ?? 'presente',
-      }));
-      try {
-        const r = await api(`/api/clases/${claseId}/asistencia`, { method: 'PUT', body: { fecha, registros } });
-        avisar(r.mensaje, r.enRiesgo?.length ? 'info' : 'exito',
-          r.enRiesgo?.map((a) => `${a.nombre}: ${a.porcentajeInasistencia}% de inasistencia`) ?? []);
-      } catch (e) {
-        avisar(e.message);
-      }
-    });
+    // Al hacer clic en una fecha, abrir la ventana flotante con la tabla.
+    panel.querySelectorAll('.dia-asist').forEach((b) =>
+      b.addEventListener('click', () => abrirAsistenciaFecha(b.dataset.fecha)));
   } catch (e) {
     panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
+}
+
+/**
+ * Abre una ventana flotante con la tabla de alumnos y su asistencia para una
+ * fecha. Si el usuario puede editar (admin/maestro), muestra el botón guardar.
+ */
+async function abrirAsistenciaFecha(fecha) {
+  const dlg = $('dlg-asist') || (() => {
+    const d = document.createElement('dialog');
+    d.id = 'dlg-asist';
+    d.className = 'dialogo';
+    document.body.appendChild(d);
+    return d;
+  })();
+
+  const fechaLinda = new Date(fecha + 'T12:00:00').toLocaleDateString('es-HN',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  dlg.innerHTML = '<div class="cuerpo"><p style="color:var(--color-text-muted)">Cargando…</p></div>';
+  dlg.showModal();
+
+  try {
+    const { alumnos, yaTomada } = await api(`/api/clases/${claseId}/asistencia?fecha=${fecha}`);
+    const estados = ['presente', 'ausente', 'tarde', 'justificado'];
+    const editable = puedeEditar();
+
+    dlg.innerHTML = `
+      <div class="cuerpo">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:1rem;margin-bottom:1rem">
+          <div>
+            <h2 style="margin:0;color:var(--color-primary);text-transform:capitalize">${escapar(fechaLinda)}</h2>
+            <p style="margin:.25rem 0 0;color:var(--color-text-muted)">
+              ${yaTomada ? 'Asistencia registrada' : 'Sin registro'} · ${alumnos.length} alumnos
+              ${editable ? '' : ' · solo lectura'}
+            </p>
+          </div>
+          <button type="button" class="boton boton-secundario" id="asist-cerrar" style="width:auto">Cerrar</button>
+        </div>
+        <div class="tarjeta" style="padding:0;overflow:auto;max-height:55vh">
+          <table class="tabla">
+            <thead><tr><th>Alumno</th>${estados.map((e) => `<th style="text-align:center;text-transform:capitalize">${e}</th>`).join('')}</tr></thead>
+            <tbody>${alumnos.map((a) => `
+              <tr>
+                <td>${escapar(a.nombre)}</td>
+                ${estados.map((e) => `<td style="text-align:center">
+                  <input type="radio" name="al-${a.alumno_id}" value="${e}"
+                    ${a.estado === e || (!a.estado && e === 'presente') ? 'checked' : ''}
+                    ${editable ? '' : 'disabled'}>
+                </td>`).join('')}
+              </tr>`).join('')}</tbody>
+          </table>
+        </div>
+        ${editable ? '<button class="boton" id="asist-guardar" style="width:auto;margin-top:1rem">Guardar asistencia</button>' : ''}
+      </div>`;
+
+    $('asist-cerrar').onclick = () => dlg.close();
+
+    const guardar = $('asist-guardar');
+    if (guardar) {
+      guardar.onclick = async () => {
+        const registros = alumnos.map((a) => ({
+          alumnoId: a.alumno_id,
+          estado: dlg.querySelector(`input[name="al-${a.alumno_id}"]:checked`)?.value ?? 'presente',
+        }));
+        try {
+          const r = await api(`/api/clases/${claseId}/asistencia`, { method: 'PUT', body: { fecha, registros } });
+          avisar(r.mensaje || 'Asistencia guardada.', r.enRiesgo?.length ? 'info' : 'exito',
+            r.enRiesgo?.filter((a) => a.enRiesgo).map((a) => `${a.nombre}: ${a.porcentajeInasistencia}% de inasistencia`) ?? []);
+          dlg.close();
+          cargarAsistencia(); // refrescar la cuadrícula para marcar la fecha
+        } catch (e) {
+          avisar(e.message);
+        }
+      };
+    }
+  } catch (e) {
+    dlg.innerHTML = `<div class="cuerpo"><p style="color:var(--color-error)">${escapar(e.message)}</p><button type="button" class="boton boton-secundario" onclick="this.closest('dialog').close()">Cerrar</button></div>`;
   }
 }
 

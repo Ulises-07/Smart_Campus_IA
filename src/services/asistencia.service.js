@@ -42,6 +42,28 @@ export async function planilla(claseId, fecha) {
 }
 
 /**
+ * Devuelve las fechas que YA tienen asistencia registrada para una clase, con
+ * un pequeño resumen por fecha (cuántos presentes, ausentes, etc.). Sirve para
+ * pintar la cuadrícula del calendario y marcar los días ya tomados.
+ */
+export async function fechasConAsistencia(claseId) {
+  const filas = await q(
+    `SELECT DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+            COUNT(*) AS total,
+            SUM(estado = 'presente')    AS presentes,
+            SUM(estado = 'ausente')     AS ausentes,
+            SUM(estado = 'tarde')       AS tardes,
+            SUM(estado = 'justificado') AS justificados
+       FROM asistencia
+      WHERE clase_id = ?
+      GROUP BY fecha
+      ORDER BY fecha`,
+    [claseId]
+  );
+  return filas;
+}
+
+/**
  * Guarda el pase de lista de una clase para un día.
  * Devuelve los alumnos que, tras este registro, superan el umbral de
  * inasistencia: son los que hay que notificar al encargado.
