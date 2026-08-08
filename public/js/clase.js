@@ -405,6 +405,7 @@ async function cargarMaterial() {
               <td style="font-size:var(--texto-xs);color:var(--color-text-muted)">${escapar(m.subido_por ?? '—')}</td>
               <td class="acciones">
                 <a class="boton-mini" href="/api/material/${m.id}/descargar">Descargar</a>
+                ${esResumible(m.nombre_original) ? `<button class="boton-mini boton-ia" data-resumir="${m.id}" data-titulo="${escapar(m.titulo)}">✨ Resumen con IA</button>` : ''}
                 ${puedeEditar() ? `<button class="boton-mini" data-borrar-mat="${m.id}">Borrar</button>` : ''}
               </td>
             </tr>`).join('') : '<tr><td colspan="5" style="padding:1.5rem;color:var(--color-text-muted)">Sin material publicado.</td></tr>'}</tbody>
@@ -412,6 +413,8 @@ async function cargarMaterial() {
       </div>`;
 
     $('m-subir')?.addEventListener('click', subirMaterial);
+    panel.querySelectorAll('[data-resumir]').forEach((b) =>
+      b.addEventListener('click', () => generarResumenIA(b.dataset.resumir, b.dataset.titulo)));
     panel.querySelectorAll('[data-borrar-mat]').forEach((b) =>
       b.addEventListener('click', async () => {
         await api(`/api/material/${b.dataset.borrarMat}`, { method: 'DELETE' });
@@ -419,6 +422,116 @@ async function cargarMaterial() {
       }));
   } catch (e) {
     panel.innerHTML = `<div class="tarjeta"><p style="color:var(--color-error)">${escapar(e.message)}</p></div>`;
+  }
+}
+
+// ---------- RESUMEN CON IA (Ollama) ----------
+
+// Solo se puede resumir lo que tiene texto extraíble: PDF, Word y texto.
+function esResumible(nombre) {
+  const ext = (nombre.split('.').pop() ?? '').toLowerCase();
+  return ['pdf', 'docx', 'txt', 'md', 'csv'].includes(ext);
+}
+
+// Guarda el último resumen generado para poder descargarlo en PDF.
+let ultimoResumen = null;
+
+async function generarResumenIA(materialId, titulo) {
+  mostrarCargandoIA();
+  try {
+    const r = await api(`/api/material/${materialId}/resumen`, { method: 'POST', body: {} });
+    ultimoResumen = { materialId, titulo: r.titulo ?? titulo, resumen: r.resumen };
+    mostrarResumenIA(r.titulo ?? titulo, r.resumen, r.recortado);
+  } catch (e) {
+    cerrarDlgIA();
+    avisar(e.message || 'No se pudo generar el resumen.');
+  }
+}
+
+// Ventana flotante con la animación futurista mientras se genera.
+function mostrarCargandoIA() {
+  let dlg = $('dlg-ia');
+  if (!dlg) {
+    dlg = document.createElement('dialog');
+    dlg.id = 'dlg-ia';
+    dlg.className = 'dialogo dlg-ia';
+    document.body.appendChild(dlg);
+  }
+  dlg.innerHTML = `
+    <div class="ia-cargando">
+      <div class="ia-orbe">
+        <div class="ia-anillo"></div>
+        <div class="ia-anillo"></div>
+        <div class="ia-anillo"></div>
+        <div class="ia-nucleo">✨</div>
+      </div>
+      <div class="ia-texto">Generando resumen</div>
+      <div class="ia-subtexto">cargando<span class="ia-puntos"></span></div>
+      <div class="ia-barra"><div class="ia-barra-fill"></div></div>
+    </div>`;
+  if (!dlg.open) dlg.showModal();
+}
+
+function cerrarDlgIA() {
+  const dlg = $('dlg-ia');
+  if (dlg?.open) dlg.close();
+}
+
+// Ventana flotante con el resumen ya generado + botón de descargar PDF.
+function mostrarResumenIA(titulo, resumen, recortado) {
+  let dlg = $('dlg-ia');
+  if (!dlg) {
+    dlg = document.createElement('dialog');
+    dlg.id = 'dlg-ia';
+    dlg.className = 'dialogo dlg-ia';
+    document.body.appendChild(dlg);
+  }
+  dlg.innerHTML = `
+    <div class="cuerpo ia-resultado">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:1rem;margin-bottom:1rem">
+        <div>
+          <div class="ia-etiqueta">✨ Resumen generado con IA</div>
+          <h2 style="margin:.25rem 0 0;color:var(--color-primary)">${escapar(titulo)}</h2>
+        </div>
+        <button type="button" class="boton boton-secundario" id="ia-cerrar" style="width:auto">Cerrar</button>
+      </div>
+      ${recortado ? '<p class="ia-aviso">El material era extenso; se resumió su primera parte.</p>' : ''}
+      <div class="ia-scroll">${escapar(resumen).replace(/\n/g, '<br>')}</div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem">
+        <button class="boton" id="ia-pdf" style="width:auto">Descargar PDF</button>
+      </div>
+    </div>`;
+  if (!dlg.open) dlg.showModal();
+
+  $('ia-cerrar').onclick = () => dlg.close();
+  $('ia-pdf').onclick = () => descargarResumenPDF();
+}
+
+// Descarga el resumen actual como PDF (lo genera el backend con pdfkit).
+async function descargarResumenPDF() {
+  if (!ultimoResumen) return;
+  const btn = $('ia-pdf');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando PDF…'; }
+  try {
+    const resp = await fetch(`/api/material/${ultimoResumen.materialId}/resumen/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo: ultimoResumen.titulo, resumen: ultimoResumen.resumen }),
+    });
+    if (!resp.ok) throw new Error('No se pudo generar el PDF.');
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resumen-${ultimoResumen.titulo.replace(/[^\w.\-]/g, '_')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    avisar(e.message || 'No se pudo descargar el PDF.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Descargar PDF'; }
   }
 }
 
