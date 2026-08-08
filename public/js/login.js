@@ -59,7 +59,8 @@
         return;
       }
 
-      window.location.href = '/inicio.html';
+      // Acceso correcto: reproducir la animación de bienvenida y luego entrar.
+      reproducirAnimacionAcceso(() => { window.location.href = '/inicio.html'; });
     } catch {
       mostrar('No se pudo conectar con el servidor.');
     } finally {
@@ -105,4 +106,32 @@
       btn.textContent = 'Guardar y continuar';
     }
   });
+
+  // ---- Animación de acceso: semáforo en verde + barrera que se levanta ----
+  function reproducirAnimacionAcceso(alTerminar) {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const overlay = document.createElement('div');
+    overlay.id = 'overlay-acceso';
+    overlay.innerHTML = `
+      <div class="acc-escena">
+        <img src="/img/logo-256.png" alt="" class="acc-logo" id="acc-logo-img">
+        <p class="acc-titulo">Bienvenido a Smart Campus</p>
+        <div class="acc-semaforo" aria-hidden="true">
+          <div class="acc-luz roja"></div>
+          <div class="acc-luz ambar"></div>
+          <div class="acc-luz verde"></div>
+        </div>
+        <div class="acc-barrera-zona" aria-hidden="true">
+          <div class="acc-poste"></div>
+          <div class="acc-base"></div>
+          <div class="acc-brazo"></div>
+        </div>
+        <p class="acc-sub">Acceso concedido · Adelante</p>
+      </div>`;
+    document.body.appendChild(overlay);
+    // Si el logo no carga, se oculta (sin handler inline, que la CSP bloquea).
+    const img = overlay.querySelector('#acc-logo-img');
+    if (img) img.addEventListener('error', () => { img.style.display = 'none'; });
+    setTimeout(() => { if (typeof alTerminar === 'function') alTerminar(); }, reduce ? 200 : 3000);
+  }
 })();

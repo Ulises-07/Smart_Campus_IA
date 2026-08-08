@@ -1,4 +1,5 @@
 import { api, iniciarPantalla, escapar } from './comun.js';
+import { montarReloj } from './reloj.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -12,6 +13,9 @@ const tarjeta = (titulo, valor, nota = '') => `
 (async () => {
   const usuario = await iniciarPantalla('Inicio');
   $('saludo').textContent = `Hola, ${usuario.persona.nombreCompleto.split(' ')[0]}`;
+
+  // Reloj flip con la fecha y hora actuales.
+  montarReloj('reloj');
 
   try {
     const ctx = await api('/api/contexto');

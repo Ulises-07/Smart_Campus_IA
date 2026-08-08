@@ -1,0 +1,203 @@
+/* ============================================================
+   Animación de acceso: semáforo en verde + barrera que se levanta.
+   Se muestra un instante tras iniciar sesión, antes del dashboard.
+   ============================================================ */
+
+#overlay-acceso {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  background: linear-gradient(135deg, #001937 0%, #0a2f5c 60%, #061d3d 100%);
+  overflow: hidden;
+  animation: acc-fondo-salida .6s ease 2.4s forwards;
+}
+
+/* Resplandor radial de fondo que late */
+#overlay-acceso::before {
+  content: "";
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  background: radial-gradient(circle, rgba(219,160,24,.18) 0%, transparent 60%);
+  animation: acc-pulso 2s ease-in-out infinite;
+}
+
+@keyframes acc-pulso {
+  0%, 100% { transform: scale(.9); opacity: .5; }
+  50%      { transform: scale(1.15); opacity: 1; }
+}
+
+/* ---- Escena central ---- */
+.acc-escena {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  z-index: 2;
+}
+
+/* ---- Semáforo ---- */
+.acc-semaforo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px;
+  background: #0c1420;
+  border-radius: 18px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.06);
+}
+
+.acc-luz {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #1a2230;
+  box-shadow: inset 0 0 8px rgba(0,0,0,.8);
+  position: relative;
+}
+
+/* La luz verde se enciende con un retardo */
+.acc-luz.verde {
+  animation: acc-verde-on .4s ease .8s forwards;
+}
+
+@keyframes acc-verde-on {
+  to {
+    background: #2ecc71;
+    box-shadow: 0 0 30px 8px rgba(46,204,113,.8), inset 0 0 8px rgba(255,255,255,.4);
+  }
+}
+
+/* La roja se apaga (empieza encendida) */
+.acc-luz.roja {
+  background: #e74c3c;
+  box-shadow: 0 0 20px 4px rgba(231,76,60,.6), inset 0 0 8px rgba(255,255,255,.3);
+  animation: acc-roja-off .4s ease .8s forwards;
+}
+
+@keyframes acc-roja-off {
+  to { background: #2a1418; box-shadow: inset 0 0 8px rgba(0,0,0,.8); }
+}
+
+.acc-luz.ambar { background: #2a2410; }
+
+/* ---- Barrera de estacionamiento ---- */
+.acc-barrera-zona {
+  position: relative;
+  width: 320px;
+  height: 90px;
+  margin-top: .5rem;
+}
+
+/* Poste de la barrera */
+.acc-poste {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 26px;
+  height: 74px;
+  background: linear-gradient(180deg, #d8dde5, #9aa4b2);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+}
+
+/* Brazo de la barrera: rota hacia arriba para "dar paso" */
+.acc-brazo {
+  position: absolute;
+  left: 18px;
+  bottom: 58px;
+  width: 280px;
+  height: 16px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #e74c3c 0, #e74c3c 22px,
+    #f5f5f5 22px, #f5f5f5 44px
+  );
+  border-radius: 4px;
+  transform-origin: left center;
+  transform: rotate(0deg);
+  box-shadow: 0 3px 10px rgba(0,0,0,.35);
+  animation: acc-abrir 1s cubic-bezier(.68,-0.35,.27,1.35) 1.1s forwards;
+}
+
+@keyframes acc-abrir {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(-78deg); }
+}
+
+/* Base del poste */
+.acc-base {
+  position: absolute;
+  left: -6px;
+  bottom: -6px;
+  width: 40px;
+  height: 14px;
+  background: #6b7280;
+  border-radius: 4px;
+}
+
+/* ---- Logo y texto ---- */
+.acc-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: rgba(255,255,255,.06);
+  padding: 6px;
+  animation: acc-logo-in .6s ease .2s both;
+}
+
+@keyframes acc-logo-in {
+  from { transform: scale(.5) translateY(-20px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.acc-titulo {
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-align: center;
+  margin: 0;
+  animation: acc-texto-in .5s ease .4s both;
+}
+
+.acc-sub {
+  color: var(--marca-oro, #dba018);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  opacity: 0;
+  animation: acc-paso .5s ease 1.6s forwards;
+}
+
+@keyframes acc-texto-in {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes acc-paso {
+  0%   { transform: scale(.8); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes acc-fondo-salida {
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  #overlay-acceso, #overlay-acceso *,
+  .acc-brazo, .acc-luz, .acc-logo, .acc-titulo, .acc-sub {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+  }
+}
