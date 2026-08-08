@@ -1,4 +1,4 @@
-import { api, iniciarPantalla, escapar } from './comun.js';
+import { api, iniciarPantalla, escapar, tablaParciales } from './comun.js';
 
 const $ = (id) => document.getElementById(id);
 const L = (n) => `L ${Number(n).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -87,7 +87,8 @@ function renderAlumno(d) {
     tarjeta('Mi promedio', d.promedio ?? 'Sin notas', '', d.promedio !== null && d.promedio >= 70 ? 'var(--color-aprobado)' : d.promedio !== null ? 'var(--color-reprobado)' : 'var(--color-primary)') +
     tarjeta('Materias', d.materias, `${d.aprobadas} aprobadas · ${d.reprobadas} reprobadas`) +
     tarjeta('Saldo pendiente', L(d.saldoPendiente), '', d.saldoPendiente > 0 ? 'var(--color-reprobado)' : 'var(--color-aprobado)')
-  )}`;
+  )}
+    ${tablaParciales(d.promediosParciales)}`;
 }
 
 (async () => {

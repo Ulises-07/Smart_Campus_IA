@@ -183,7 +183,43 @@ export async function obtener(usuario, alumnoId) {
     [alumnoId]
   );
 
+  // Promedio de cada parcial: se promedian las notas finales del alumno en
+  // todas sus clases de ese parcial. La nota final de cada clase es la SUMA
+  // directa de sus evaluaciones (no extras). Devuelve los 4 parciales; los que
+  // aún no tienen notas quedan en null.
+  alumno.promediosParciales = await promediosPorParcial(alumnoId);
+
   return alumno;
+}
+
+/**
+ * Calcula el promedio de cada parcial (1 a 4) para un alumno, en el año lectivo
+ * activo. Cada parcial: promedio de la nota final (suma directa) de sus clases.
+ */
+export async function promediosPorParcial(alumnoId) {
+  const filas = await q(
+    `SELECT per.numero AS parcial, ROUND(AVG(sub.suma), 2) AS promedio
+       FROM periodo per
+       JOIN anio_lectivo al ON al.id = per.anio_lectivo_id AND al.estado = 'activo'
+       JOIN (
+         SELECT e.periodo_id, e.clase_id, n.alumno_id, ROUND(SUM(n.puntaje)) AS suma
+           FROM evaluacion e
+           JOIN nota n ON n.evaluacion_id = e.id
+           JOIN tipo_evaluacion t ON t.id = e.tipo_evaluacion_id
+          WHERE n.alumno_id = ? AND e.activa = 1 AND t.es_extra = 0
+          GROUP BY e.periodo_id, e.clase_id, n.alumno_id
+       ) sub ON sub.periodo_id = per.id
+      GROUP BY per.numero
+      ORDER BY per.numero`,
+    [alumnoId]
+  );
+
+  // Armar los 4 parciales, con null donde no haya notas.
+  const mapa = new Map(filas.map((f) => [f.parcial, f.promedio]));
+  return [1, 2, 3, 4].map((num) => ({
+    parcial: num,
+    promedio: mapa.get(num) ?? null,
+  }));
 }
 
 /** Genera el siguiente código correlativo del año: 2026-0001, 2026-0002... */

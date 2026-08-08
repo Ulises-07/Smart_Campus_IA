@@ -341,3 +341,40 @@ function montarDictado(boton, input) {
     }
   });
 }
+
+/**
+ * Genera una tablita estética con los 4 parciales y sus promedios.
+ * `promedios` es un arreglo [{parcial, promedio}, ...]; los que no tienen
+ * nota vienen en null y se muestran con "—". Colorea según aprobado (>=70).
+ * Se usa en la ficha del alumno y en el tablero del alumno.
+ */
+export function tablaParciales(promedios) {
+  const lista = Array.isArray(promedios) && promedios.length
+    ? promedios
+    : [1, 2, 3, 4].map((n) => ({ parcial: n, promedio: null }));
+
+  const celda = (p) => {
+    const v = p.promedio;
+    const color = v === null ? 'var(--color-text-muted)'
+      : v >= 70 ? 'var(--color-aprobado)' : 'var(--color-reprobado)';
+    return `<td style="text-align:center;font-weight:700;color:${color}">${v === null ? '—' : v}</td>`;
+  };
+
+  return `
+    <div class="tabla-parciales">
+      <div class="tabla-parciales-titulo">Promedio por parcial</div>
+      <table class="tabla mini-parciales">
+        <thead>
+          <tr>
+            <th style="text-align:center">I Parcial</th>
+            <th style="text-align:center">II Parcial</th>
+            <th style="text-align:center">III Parcial</th>
+            <th style="text-align:center">IV Parcial</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>${lista.map(celda).join('')}</tr>
+        </tbody>
+      </table>
+    </div>`;
+}

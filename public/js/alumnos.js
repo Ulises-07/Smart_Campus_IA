@@ -1,4 +1,4 @@
-import { api, iniciarPantalla, escapar, avisar, limpiarAviso } from './comun.js';
+import { api, iniciarPantalla, escapar, avisar, limpiarAviso, tablaParciales } from './comun.js';
 
 const $ = (id) => document.getElementById(id);
 let usuario, catalogos, pagina = 1;
@@ -319,6 +319,8 @@ async function verAlumno(id) {
               }).join('')
             : '<p class="ficha-vacio">Sin registros de comportamiento.</p>'}
         </div>
+
+        ${tablaParciales(a.promediosParciales)}
       </div>`;
 
     abrirDialogo('', html, null);

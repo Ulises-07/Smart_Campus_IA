@@ -10,6 +10,7 @@
  * para eso están las pantallas con su control de permiso por fila.
  */
 import { q } from '../config/db.js';
+import { promediosPorParcial } from './alumno.service.js';
 import { ROLES } from '../middleware/auth.js';
 
 async function anioActivo() {
@@ -160,6 +161,7 @@ async function tableroAlumno(usuario, anioId) {
   return {
     alumno,
     promedio,
+    promediosParciales: await promediosPorParcial(alumno.id),
     materias: notas.length,
     aprobadas: conNota.filter((n) => n.aprobado).length,
     reprobadas: conNota.filter((n) => n.aprobado === 0).length,
