@@ -24,6 +24,7 @@
     "probar:notas": "node scripts/probar-notas.js",
     "probar:finanzas": "node scripts/probar-finanzas.js",
     "probar:asistente": "node scripts/probar-asistente.js",
+    "probar:ollama": "node scripts/probar-ollama.js",
     "probar:reportes": "node scripts/probar-reportes.js",
     "purgar:video": "node scripts/purgar-video.js",
     "probar:video": "node scripts/probar-video.js",

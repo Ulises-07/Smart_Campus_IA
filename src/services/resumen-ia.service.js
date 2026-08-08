@@ -16,8 +16,9 @@ import { AppError } from '../middleware/error.js';
 import * as ollama from './ollama.service.js';
 
 // Límite de texto que se manda al modelo: un material enorme se recorta para no
-// saturar a Ollama ni tardar demasiado. ~12k caracteres son varias páginas.
-const MAX_CARACTERES = 12000;
+// saturar a Ollama ni tardar demasiado. Con 6k caracteres el resumen sale en un
+// tiempo razonable incluso en equipos modestos.
+const MAX_CARACTERES = 6000;
 
 /**
  * Extrae el texto de un archivo según su extensión.
@@ -110,11 +111,15 @@ export async function resumirMaterial(materialId) {
   ].join('\n');
 
   const pregunta = `Resume el siguiente material titulado "${m.titulo}".`;
-  const salida = await ollama.generar({ system, contexto, pregunta });
+  // Resumir es pesado: le damos hasta 3 minutos (el chatbot usa el timeout corto
+  // por defecto, pero aquí necesitamos más).
+  const salida = await ollama.generar({ system, contexto, pregunta, timeoutMs: 180000 });
 
   if (!salida.disponible || !salida.texto) {
+    // Incluir el motivo real ayuda a saber si fue timeout, conexión, etc.
+    const detalle = salida.motivo ? ` (${salida.motivo})` : '';
     throw new AppError(
-      'La IA no pudo generar el resumen. Intenta de nuevo en un momento.',
+      `La IA no pudo generar el resumen. Puede que el modelo tardara demasiado; intenta con un material más corto.${detalle}`,
       503, 'IA_SIN_RESPUESTA'
     );
   }

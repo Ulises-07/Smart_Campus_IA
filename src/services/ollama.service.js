@@ -51,7 +51,7 @@ export async function estado() {
  * El contenido del usuario y del material didactico va SIEMPRE como dato
  * delimitado, nunca concatenado libremente al system prompt.
  */
-export async function generar({ system, contexto = '', pregunta }) {
+export async function generar({ system, contexto = '', pregunta, timeoutMs }) {
   if (!env.OLLAMA_ENABLED) {
     return { disponible: false, texto: null };
   }
@@ -73,6 +73,8 @@ export async function generar({ system, contexto = '', pregunta }) {
     .join('\n\n');
 
   try {
+    // Timeout configurable: tareas pesadas (resúmenes) necesitan más tiempo
+    // que una pregunta corta del chatbot.
     const respuesta = await pedir('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -90,7 +92,7 @@ export async function generar({ system, contexto = '', pregunta }) {
           repeat_penalty: 1.15,
         },
       }),
-    });
+    }, timeoutMs ?? env.OLLAMA_TIMEOUT_MS);
     const datos = await respuesta.json();
     return { disponible: true, texto: datos.response?.trim() ?? '' };
   } catch (error) {
