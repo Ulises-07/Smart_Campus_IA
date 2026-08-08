@@ -49,11 +49,11 @@ export function montarReloj(idContenedor) {
       <span class="reloj-rotulo">Día</span>
       <div class="reloj-fila" id="reloj-dia"></div>
     </div>
+    <div class="reloj-div"></div>
     <div class="reloj-seccion">
       <span class="reloj-rotulo">Hora</span>
       <div class="reloj-fila" id="reloj-hora"></div>
-    </div>
-    <div class="reloj-fecha" id="reloj-fecha"></div>`;
+    </div>`;
 
   // Cartas del día: nombre + número.
   const filaDia = cont.querySelector('#reloj-dia');
@@ -68,7 +68,6 @@ export function montarReloj(idContenedor) {
   separador(filaHora);
   const setS = crearCarta(filaHora);
 
-  const fecha = cont.querySelector('#reloj-fecha');
   const dosDig = (n) => String(n).padStart(2, '0');
 
   function tick() {
@@ -78,8 +77,6 @@ export function montarReloj(idContenedor) {
     setH(dosDig(ahora.getHours()));
     setM(dosDig(ahora.getMinutes()));
     setS(dosDig(ahora.getSeconds()));
-    fecha.textContent =
-      `${DIAS[ahora.getDay()]} ${ahora.getDate()} de ${MESES[ahora.getMonth()]} de ${ahora.getFullYear()}`;
   }
 
   tick();

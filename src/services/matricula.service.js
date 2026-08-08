@@ -11,7 +11,7 @@ import { AppError } from '../middleware/error.js';
 
 /** Año lectivo activo. Casi todo el sistema depende de que exista uno. */
 export async function anioActivo() {
-  const filas = await q("SELECT id, anio, fecha_inicio, fecha_fin FROM anio_lectivo WHERE estado = 'activo' LIMIT 1");
+  const filas = await q("SELECT id, anio, nombre, fecha_inicio, fecha_fin FROM anio_lectivo WHERE estado = 'activo' LIMIT 1");
   if (!filas.length) {
     throw new AppError('No hay un ano lectivo activo. Configuralo antes de matricular.', 409, 'SIN_ANIO_ACTIVO');
   }

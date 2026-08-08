@@ -19,7 +19,8 @@ const tarjeta = (titulo, valor, nota = '') => `
 
   try {
     const ctx = await api('/api/contexto');
-    $('sub').textContent = `${ctx.anioLectivo.nombre} · ${usuario.rolNombre}`;
+    const nombreAnio = ctx.anioLectivo?.nombre || (ctx.anioLectivo?.anio ? `Año Lectivo ${ctx.anioLectivo.anio}` : 'Año Lectivo');
+    $('sub').textContent = `${nombreAnio} · ${usuario.rolNombre}`;
 
     const c = ctx.catalogos;
     const matriculados = c.secciones.reduce((s, x) => s + Number(x.matriculados), 0);

@@ -1,30 +1,38 @@
 /* ============================================================
-   Reloj tipo "flip clock" para el dashboard.
-   Muestra el día (nombre + número) y la hora (HH:MM:SS) en tarjetas
-   con efecto de volteo al cambiar el valor.
+   Reloj tipo "flip clock" — versión HORIZONTAL y compacta.
+   Se coloca a la par del nombre del usuario en el dashboard.
    ============================================================ */
+
+/* Cabecera del inicio: saludo a la izquierda, reloj a la derecha */
+.cabecera-inicio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
 
 .reloj-flip {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 18px;
+  align-items: center;
+  gap: 1.25rem;
+  padding: .85rem 1.25rem;
+  border-radius: 14px;
   background: linear-gradient(135deg, #0c1420 0%, #16233a 100%);
-  box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 0 0 2px rgba(255,255,255,.04);
-  margin-bottom: 2rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22), inset 0 0 0 2px rgba(255,255,255,.04);
 }
 
 .reloj-seccion {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .5rem;
+  gap: .35rem;
 }
 
 .reloj-rotulo {
-  font-size: .7rem;
-  letter-spacing: .25em;
+  font-size: .6rem;
+  letter-spacing: .2em;
   text-transform: uppercase;
   color: var(--marca-oro, #dba018);
   font-weight: 700;
@@ -32,21 +40,18 @@
 
 .reloj-fila {
   display: flex;
-  gap: .5rem;
+  gap: .3rem;
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
-/* Cada "carta" del flip */
+/* Cada "carta" del flip (compacta) */
 .flip-carta {
   position: relative;
-  min-width: 54px;
-  height: 74px;
+  min-width: 38px;
+  height: 50px;
   perspective: 300px;
 }
 
-/* El texto/número dentro de la carta */
 .flip-cara {
   position: absolute;
   inset: 0;
@@ -56,13 +61,13 @@
   background: linear-gradient(180deg, #f4f1e9 0%, #e6e1d4 49%, #d3ccbb 51%, #e9e3d5 100%);
   color: #1a1a1a;
   font-weight: 800;
-  font-size: 2.4rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.3), inset 0 0 0 1px rgba(0,0,0,.08);
+  font-size: 1.6rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.28), inset 0 0 0 1px rgba(0,0,0,.08);
   font-variant-numeric: tabular-nums;
 }
 
-/* Línea divisoria horizontal del flip (mitad de la carta) */
+/* Línea divisoria del flip */
 .flip-cara::after {
   content: "";
   position: absolute;
@@ -72,12 +77,19 @@
   transform: translateY(-.5px);
 }
 
-/* Carta ancha para el nombre del día y el mes */
-.flip-carta.ancha { min-width: 190px; }
-.flip-carta.ancha .flip-cara { font-size: 1.5rem; letter-spacing: .04em; text-transform: uppercase; }
+/* Carta ancha para el nombre del día */
+.flip-carta.ancha { min-width: 130px; }
+.flip-carta.ancha .flip-cara { font-size: 1rem; letter-spacing: .04em; text-transform: uppercase; }
 
 /* Carta mediana (número del día) */
-.flip-carta.media { min-width: 90px; }
+.flip-carta.media { min-width: 56px; }
+
+/* Separador vertical entre las dos secciones */
+.reloj-div {
+  width: 1px;
+  height: 44px;
+  background: rgba(255,255,255,.12);
+}
 
 /* Animación de volteo al cambiar */
 .flip-carta.cambiando .flip-cara {
@@ -94,26 +106,24 @@
 /* Separador ":" entre horas/minutos/segundos */
 .flip-dosp {
   color: #f4f1e9;
-  font-size: 2rem;
+  font-size: 1.3rem;
   font-weight: 800;
   display: flex;
   align-items: center;
+  padding: 0 1px;
 }
 
-/* La fecha completa debajo */
-.reloj-fecha {
-  text-align: center;
-  color: rgba(255,255,255,.75);
-  font-size: .95rem;
-  margin-top: .25rem;
+/* En pantallas chicas, el reloj baja debajo del saludo y se centra */
+@media (max-width: 720px) {
+  .cabecera-inicio { flex-direction: column; align-items: flex-start; }
+  .reloj-flip { width: 100%; justify-content: center; }
 }
 
-/* En modo claro, el reloj mantiene su fondo oscuro (se ve bien igual) */
-@media (max-width: 520px) {
-  .flip-cara { font-size: 1.8rem; }
-  .flip-carta { min-width: 42px; height: 60px; }
-  .flip-carta.ancha { min-width: 150px; }
-  .flip-carta.ancha .flip-cara { font-size: 1.2rem; }
+@media (max-width: 420px) {
+  .flip-cara { font-size: 1.3rem; }
+  .flip-carta { min-width: 32px; height: 42px; }
+  .flip-carta.ancha { min-width: 100px; }
+  .flip-carta.ancha .flip-cara { font-size: .85rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
