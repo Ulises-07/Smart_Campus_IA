@@ -539,7 +539,9 @@ async function cargarMisNotas() {
       return;
     }
 
-    const aprobado = fila.aprobado === 1 || fila.aprobado === true;
+    // Aprobado se decide por la nota (>= 70), no por el campo que puede venir
+    // sin consolidar.
+    const aprobado = Number(fila.nota_final) >= 70;
     const color = aprobado ? 'var(--color-aprobado)' : 'var(--color-reprobado)';
     panel.innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">${boleta}</div>

@@ -351,7 +351,11 @@ export async function notasDeAlumno(alumnoId, { periodoId, anioLectivoId }) {
     return q(
       `SELECT c.id AS clase_id, asg.nombre AS asignatura,
               TRIM(CONCAT_WS(' ', pm.primer_nombre, pm.primer_apellido)) AS maestro,
-              COALESCE(np.nota_final, sub.suma) AS nota_final, np.aprobado, np.bloqueada, np.detalle_calculo
+              COALESCE(np.nota_final, sub.suma) AS nota_final,
+              -- Aprobado se decide por la nota (>= 70), no por np.aprobado que
+              -- puede estar sin consolidar.
+              (COALESCE(np.nota_final, sub.suma) >= 70) AS aprobado,
+              np.bloqueada, np.detalle_calculo
          FROM inscripcion i
          JOIN clase c ON c.id = i.clase_id
          JOIN asignatura asg ON asg.id = c.asignatura_id

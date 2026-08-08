@@ -151,13 +151,16 @@ export async function boletaCalificaciones({ alumnoId, periodoId }) {
     const alto = 20;
     if (i % 2 === 0) doc.rect(x, y, ancho, alto).fill(COLOR.fondoAlt);
     const tieneNota = n.nota_final !== null;
+    // Aprobado se decide por la nota misma (>= 70), no por el campo np.aprobado
+    // que puede estar sin consolidar. Así el color y el texto siempre coinciden.
+    const aprobado = tieneNota && Number(n.nota_final) >= 70;
     doc.fillColor(COLOR.texto).font('Helvetica').text(n.asignatura, x + 8, y + 5, { width: colAsig - 8 });
     doc.fillColor(COLOR.suave).fontSize(8).text(n.maestro ?? '—', x + 8 + colAsig, y + 6, { width: ancho - colAsig - colNota - colEstado - 8 });
     doc.fontSize(10);
-    doc.fillColor(tieneNota ? (n.aprobado ? COLOR.aprobado : COLOR.reprobado) : COLOR.suave).font('Helvetica-Bold')
+    doc.fillColor(tieneNota ? (aprobado ? COLOR.aprobado : COLOR.reprobado) : COLOR.suave).font('Helvetica-Bold')
       .text(tieneNota ? String(n.nota_final) : '—', x + ancho - colNota - colEstado, y + 5, { width: colNota, align: 'center' });
-    doc.fillColor(tieneNota ? (n.aprobado ? COLOR.aprobado : COLOR.reprobado) : COLOR.suave).font('Helvetica')
-      .text(tieneNota ? (n.aprobado ? 'Aprobado' : 'Reprobado') : 'Sin nota', x + ancho - colEstado, y + 5, { width: colEstado, align: 'center' });
+    doc.fillColor(tieneNota ? (aprobado ? COLOR.aprobado : COLOR.reprobado) : COLOR.suave).font('Helvetica')
+      .text(tieneNota ? (aprobado ? 'Aprobado' : 'Reprobado') : 'Sin nota', x + ancho - colEstado, y + 5, { width: colEstado, align: 'center' });
     y += alto;
   }
 
